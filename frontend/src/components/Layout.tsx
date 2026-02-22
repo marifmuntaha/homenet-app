@@ -50,6 +50,25 @@ export default function Layout({ children, title }: LayoutProps) {
                         <span className="nav-icon">👥</span>
                         User Management
                     </NavLink>
+                    <NavLink
+                        to="/devices"
+                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                    >
+                        <span className="nav-icon">🖥️</span>
+                        Device Mikrotik
+                    </NavLink>
+                    <NavLink
+                        to="/products"
+                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                    >
+                        <span className="nav-icon">📦</span> Product & Bandwidth
+                    </NavLink>
+                    <NavLink
+                        to="/customers"
+                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                    >
+                        <span className="nav-icon">👥</span> Manajemen Pelanggan
+                    </NavLink>
                 </nav>
 
                 <div className="sidebar-footer">

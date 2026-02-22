@@ -9,6 +9,67 @@ export interface User {
     updated_at: string | null
 }
 
+export interface Device {
+    id: number
+    name: string
+    host: string
+    user: string
+    port: number
+    created_at: string
+    updated_at: string | null
+}
+
+export interface DeviceStatus {
+    device_id: number
+    online: boolean
+    identity?: string
+    response_ms?: number
+    error?: string
+    checked_at: string
+}
+
+export interface Product {
+    id: number
+    name: string
+    price: number
+    download_speed: number
+    upload_speed: number
+    description?: string
+    created_at: string
+    updated_at: string
+}
+
+export interface ProductSyncResult {
+    [deviceId: number]: boolean
+}
+
+export interface CustomerSubscription {
+    id: number
+    customer_id: number
+    product_id: number
+    status: 'active' | 'inactive'
+    product?: Product
+    created_at: string
+    updated_at: string
+}
+
+export interface Customer {
+    id: number
+    userId: number
+    fullName: string
+    phone: string
+    address?: string
+    latitude?: number
+    longitude?: number
+    pppoeUser?: string
+    pppoePassword?: string
+    subscriptions?: CustomerSubscription[]
+    createdAt: string
+    updatedAt: string
+}
+
+
+
 export interface AuthToken {
     type: string
     value: string
