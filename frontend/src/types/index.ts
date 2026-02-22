@@ -53,6 +53,22 @@ export interface CustomerSubscription {
     updated_at: string
 }
 
+export interface Invoice {
+    id: number
+    customerId: number
+    customer?: Customer
+    month: string
+    amount: number
+    previousBalance: number
+    discount: number
+    totalAmount: number
+    status: 'unpaid' | 'paid' | 'cancelled'
+    dueDate: string
+    paidAt: string | null
+    createdAt: string
+    updatedAt: string
+}
+
 export interface Customer {
     id: number
     userId: number
@@ -64,6 +80,7 @@ export interface Customer {
     pppoeUser?: string
     pppoePassword?: string
     subscriptions?: CustomerSubscription[]
+    invoices?: Invoice[]
     createdAt: string
     updatedAt: string
 }

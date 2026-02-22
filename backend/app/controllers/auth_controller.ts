@@ -1,4 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
+import vine from '@vinejs/vine'
 import { DateTime } from 'luxon'
 import crypto from 'node:crypto'
 import User from '#models/user'
@@ -8,7 +9,10 @@ import {
     loginValidator,
     forgotPasswordValidator,
     resetPasswordValidator,
+    verifyOtpValidator,
 } from '#validators/auth_validator'
+import OtpCode from '#models/otp_code'
+import WhatsappService from '#services/whatsapp_service'
 
 export default class AuthController {
     /**
@@ -28,20 +32,115 @@ export default class AuthController {
         const user = await User.create({
             name: data.name,
             email: data.email,
-            phone: data.phone ?? null,
+            phone: data.phone, // phone is now required based on validator
             role: User.ROLE_CUSTOMER,
             password: data.password,
         })
 
-        const token = await User.accessTokens.create(user)
+        // Generate 6 digit OTP
+        const otpString = Math.floor(100000 + Math.random() * 900000).toString()
+        const expiresAt = DateTime.now().plus({ minutes: 5 })
+
+        await user.related('otpCodes').create({
+            otpCode: otpString,
+            expiresAt: expiresAt,
+        })
+
+        // Send the WhatsApp Notification
+        const messageText = `Halo ${user.name},\nKode verifikasi OTP Homenet Anda adalah: *${otpString}*.\n\nBerlaku selama 5 menit. Tolong jangan berikan kode ini ke siapapun.`
+        await WhatsappService.sendMessage(user.phone!, messageText)
 
         return response.created({
             success: true,
-            message: 'Registrasi berhasil',
+            message: 'Registrasi berhasil, kode OTP telah dikirim ke WhatsApp Anda',
+            data: {
+                requires_otp: true,
+                email: user.email,
+            },
+        })
+    }
+
+    /**
+     * POST /auth/verify-otp
+     */
+    async verifyOtp({ request, response }: HttpContext) {
+        const data = await request.validateUsing(verifyOtpValidator)
+
+        const user = await User.findBy('email', data.email)
+        if (!user) {
+            return response.notFound({ success: false, message: 'User tidak ditemukan' })
+        }
+
+        const otpRecord = await OtpCode.query()
+            .where('user_id', user.id)
+            .where('otp_code', data.otp_code)
+            .first()
+
+        if (!otpRecord) {
+            return response.badRequest({ success: false, message: 'Kode OTP tidak valid' })
+        }
+
+        if (otpRecord.expiresAt < DateTime.now()) {
+            await otpRecord.delete()
+            return response.badRequest({ success: false, message: 'Kode OTP telah kedaluwarsa, silahkan minta kode baru' })
+        }
+
+        // OTP Valid. Mark phone as verified and login
+        user.phoneVerifiedAt = DateTime.now()
+        await user.save()
+
+        // Delete all OTPs for this user
+        await OtpCode.query().where('user_id', user.id).delete()
+
+        // Create authentication token
+        const token = await User.accessTokens.create(user)
+
+        return response.ok({
+            success: true,
+            message: 'Nomor WhatsApp berhasil diverifikasi! Login sukses.',
             data: {
                 user,
                 token: token.value!.release(),
             },
+        })
+    }
+
+    /**
+     * POST /auth/resend-otp
+     */
+    async resendOtp({ request, response }: HttpContext) {
+        const { email } = await request.validateUsing(
+            vine.compile(
+                vine.object({
+                    email: vine.string().email().normalizeEmail(),
+                })
+            )
+        )
+
+        const user = await User.findBy('email', email)
+        if (!user) {
+            return response.notFound({ success: false, message: 'User tidak ditemukan' })
+        }
+
+        // Delete existing OTPs
+        await OtpCode.query().where('user_id', user.id).delete()
+
+        // Generate new 6 digit OTP
+        const otpString = Math.floor(100000 + Math.random() * 900000).toString()
+        const expiresAt = DateTime.now().plus({ minutes: 5 })
+
+        await user.related('otpCodes').create({
+            otpCode: otpString,
+            expiresAt: expiresAt,
+        })
+
+        // Send the WhatsApp Notification
+        const messageText = `Halo ${user.name},\nKode verifikasi OTP Homenet Anda yang baru adalah: *${otpString}*.\n\nBerlaku selama 5 menit.`
+        await WhatsappService.sendMessage(user.phone!, messageText)
+
+        return response.ok({
+            success: true,
+            message: 'Kode OTP baru telah dikirim ke WhatsApp Anda',
         })
     }
 

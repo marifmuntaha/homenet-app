@@ -29,7 +29,8 @@
     "#database/*": "./database/*.js",
     "#start/*": "./start/*.js",
     "#tests/*": "./tests/*.js",
-    "#config/*": "./config/*.js"
+    "#config/*": "./config/*.js",
+    "#jobs/*": "./app/jobs/*.js"
   },
   "devDependencies": {
     "@adonisjs/assembler": "^7.8.2",
@@ -59,6 +60,7 @@
     "axios": "^1.13.5",
     "luxon": "^3.7.2",
     "mysql2": "^3.17.4",
+    "p-retry": "^7.1.1",
     "reflect-metadata": "^0.2.2"
   },
   "hotHook": {

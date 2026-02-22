@@ -7,6 +7,7 @@ import UsersPage from './pages/users/UsersPage'
 import DevicesPage from './pages/devices/DevicesPage'
 import ProductsPage from './pages/products/ProductsPage'
 import CustomersPage from './pages/customers/CustomersPage'
+import InvoicesPage from './pages/invoices/InvoicesPage'
 import type { ReactNode } from 'react'
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -40,6 +41,7 @@ function AppRoutes() {
       <Route path="/devices" element={<ProtectedRoute><DevicesPage /></ProtectedRoute>} />
       <Route path="/products" element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
       <Route path="/customers" element={<ProtectedRoute><CustomersPage /></ProtectedRoute>} />
+      <Route path="/invoices" element={<ProtectedRoute><InvoicesPage /></ProtectedRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/users" replace />} />
     </Routes>

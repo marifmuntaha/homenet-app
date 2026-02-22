@@ -1,9 +1,11 @@
 import { DateTime } from 'luxon'
 import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
-import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
+import type { HasMany } from '@adonisjs/lucid/types/relations'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
+import OtpCode from '#models/otp_code'
 
 const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
   uids: ['email'],
@@ -46,4 +48,7 @@ export default class User extends compose(BaseModel, AuthFinder) {
   get roleName(): string {
     return this.role === User.ROLE_ADMINISTRATOR ? 'administrator' : 'customer'
   }
+
+  @hasMany(() => OtpCode)
+  declare otpCodes: HasMany<typeof OtpCode>
 }

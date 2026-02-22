@@ -15,6 +15,7 @@ const DevicesController = () => import('#controllers/devices_controller')
 const ProductsController = () => import('#controllers/products_controller')
 const CustomersController = () => import('#controllers/customers_controller')
 const AuthController = () => import('#controllers/auth_controller')
+const InvoicesController = () => import('#controllers/invoices_controller')
 
 /*
 |--------------------------------------------------------------------------
@@ -52,6 +53,8 @@ router.get('/test-ppp', async () => {
 router
   .group(() => {
     router.post('/register', [AuthController, 'register'])
+    router.post('/verify-otp', [AuthController, 'verifyOtp'])
+    router.post('/resend-otp', [AuthController, 'resendOtp'])
     router.post('/login', [AuthController, 'login'])
     router.post('/forgot-password', [AuthController, 'forgotPassword'])
     router.post('/reset-password', [AuthController, 'resetPassword'])
@@ -101,6 +104,12 @@ router
     router.put('/customers/:id', [CustomersController, 'update'])
     router.delete('/customers/:id', [CustomersController, 'destroy'])
     router.post('/customers/:id/change-product', [CustomersController, 'changeProduct'])
+
+    // Invoices
+    router.get('/invoices', [InvoicesController, 'index'])
+    router.post('/invoices', [InvoicesController, 'store'])
+    router.put('/invoices/:id', [InvoicesController, 'update'])
+    router.delete('/invoices/:id', [InvoicesController, 'destroy'])
   })
   .use(middleware.auth())
 

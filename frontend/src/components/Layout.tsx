@@ -69,6 +69,12 @@ export default function Layout({ children, title }: LayoutProps) {
                     >
                         <span className="nav-icon">👥</span> Manajemen Pelanggan
                     </NavLink>
+                    <NavLink
+                        to="/invoices"
+                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                    >
+                        <span className="nav-icon">🧾</span> Manajemen Tagihan
+                    </NavLink>
                 </nav>
 
                 <div className="sidebar-footer">
