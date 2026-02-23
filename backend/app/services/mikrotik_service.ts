@@ -26,7 +26,7 @@ export default class MikrotikService {
     private auth: { username: string; password: string }
     private timeout: number
 
-    constructor(host: string, port: number, user: string, password: string, timeout = 5000) {
+    constructor(host: string, port: number, user: string, password: string, timeout = 10000) {
         this.baseUrl = `http://${host}:${port}/rest`
         this.auth = { username: user, password }
         this.timeout = timeout
@@ -146,7 +146,8 @@ export default class MikrotikService {
                 timeout: this.timeout,
             })
             return true
-        } catch {
+        } catch (error: any) {
+            console.error(`Mikrotik createPPPProfile error [${name}]:`, error.response?.data || error.message)
             return false
         }
     }
@@ -168,7 +169,8 @@ export default class MikrotikService {
                 timeout: this.timeout,
             })
             return true
-        } catch {
+        } catch (error: any) {
+            console.error(`Mikrotik updatePPPProfile error [${name}]:`, error.response?.data || error.message)
             return false
         }
     }
@@ -227,6 +229,28 @@ export default class MikrotikService {
             return []
         } catch {
             return []
+        }
+    }
+
+    /**
+     * Get detail of a specific active connection
+     */
+    async getActivePPPConnectionDetail(name?: string): Promise<any | null> {
+        try {
+            const url = name ? `${this.baseUrl}/ppp/active?name=${name}` : `${this.baseUrl}/ppp/active`
+            const res = await axios.get(url, {
+                auth: this.auth,
+                timeout: this.timeout,
+            })
+            if (Array.isArray(res.data)) {
+                if (name) {
+                    return res.data.length > 0 ? res.data[0] : null
+                }
+                return res.data
+            }
+            return null
+        } catch {
+            return null
         }
     }
 
@@ -292,5 +316,70 @@ export default class MikrotikService {
             return false
         }
     }
-}
 
+    /**
+     * Remove (force-disconnect) an active PPPoE session by username.
+     * The user will reconnect automatically and pick up the new profile.
+     */
+    async removeActivePPPConnection(username: string): Promise<boolean> {
+        try {
+            const conn = await this.getActivePPPConnectionDetail(username)
+            if (!conn || !conn['.id']) return true // Not connected, nothing to do
+
+            await axios.delete(`${this.baseUrl}/ppp/active/${conn['.id']}`, {
+                auth: this.auth,
+                timeout: this.timeout,
+            })
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /* ─── INTERFACE TRAFFIC ───────────────────────────────────────── */
+
+    /**
+     * List all available interfaces on the device
+     */
+    async getInterfaces(): Promise<{ name: string; type: string; running: boolean }[]> {
+        try {
+            const res = await axios.get(`${this.baseUrl}/interface`, {
+                auth: this.auth,
+                timeout: this.timeout,
+            })
+            if (Array.isArray(res.data)) {
+                return res.data.map((iface: any) => ({
+                    name: iface.name,
+                    type: iface.type || 'ether',
+                    running: iface.running === 'true' || iface.running === true,
+                }))
+            }
+            return []
+        } catch {
+            return []
+        }
+    }
+
+    /**
+     * Get current TX/RX bytes for a specific interface (one snapshot).
+     * To calculate speed, call this twice with a time delta.
+     */
+    async getInterfaceTraffic(name: string): Promise<{ rxBytes: number; txBytes: number; rxBps: number; txBps: number } | null> {
+        try {
+            const res = await axios.get(`${this.baseUrl}/interface?name=${encodeURIComponent(name)}`, {
+                auth: this.auth,
+                timeout: this.timeout,
+            })
+            const data = Array.isArray(res.data) ? res.data[0] : res.data
+            if (!data) return null
+            return {
+                rxBytes: Number(data['rx-byte'] ?? 0),
+                txBytes: Number(data['tx-byte'] ?? 0),
+                rxBps: Number(data['rx-bits-per-second'] ?? 0),
+                txBps: Number(data['tx-bits-per-second'] ?? 0),
+            }
+        } catch {
+            return null
+        }
+    }
+}

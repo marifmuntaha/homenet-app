@@ -45,25 +45,39 @@ export default class CustomersController {
     }
     /**
      * GET /customers/active-pppoe
-     * Returns an array of usernames currently connected via PPPoE across all Mikrotik devices
+     * Returns detailed info for usernames currently connected via PPPoE across all Mikrotik devices
      */
     async activePppoe({ response }: HttpContext) {
         const devices = await Device.all()
-        const activeUsersSet = new Set<string>()
+        const activeUsersData: Record<string, any> = {}
 
         await Promise.allSettled(
             devices.map(async (device) => {
                 const svc = MikrotikService.fromDevice(device)
-                const activeOnDevice = await svc.getActivePPPConnections()
-                for (const user of activeOnDevice) {
-                    activeUsersSet.add(user)
+                try {
+                    const res = await svc.getActivePPPConnectionDetail('') // Get all active
+                    const connections = Array.isArray(res) ? res : []
+
+                    for (const conn of connections) {
+                        activeUsersData[conn.name] = {
+                            online: true,
+                            ipAddress: conn.address,
+                            uptime: conn.uptime,
+                            callerId: conn['caller-id'],
+                            profile: conn.profile,
+                            isIsolated: conn.profile?.toLowerCase().includes('isolir') ||
+                                conn.profile?.toLowerCase().includes('isolate')
+                        }
+                    }
+                } catch {
+                    // Ignore device error
                 }
             })
         )
 
         return response.ok({
             success: true,
-            data: Array.from(activeUsersSet),
+            data: activeUsersData,
         })
     }
     /**

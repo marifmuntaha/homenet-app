@@ -16,6 +16,8 @@ const ProductsController = () => import('#controllers/products_controller')
 const CustomersController = () => import('#controllers/customers_controller')
 const AuthController = () => import('#controllers/auth_controller')
 const InvoicesController = () => import('#controllers/invoices_controller')
+const CustomerDashboardController = () => import('#controllers/customer_dashboard_controller')
+const AdminDashboardController = () => import('#controllers/admin_dashboard_controller')
 
 /*
 |--------------------------------------------------------------------------
@@ -28,25 +30,6 @@ router.get('/', async () => {
     version: '1.0.0',
     status: 'running',
   }
-})
-
-router.get('/test-ppp', async () => {
-  const Device = (await import('#models/device')).default
-  const devices = await Device.all()
-  const rawResults = []
-  for (const d of devices) {
-    try {
-      const axios = (await import('axios')).default
-      const res = await axios.get(`http://${d.host}:${d.port}/rest/ppp/active`, {
-        auth: { username: d.user, password: d.password },
-        timeout: 5000
-      })
-      rawResults.push({ device: d.name, data: res.data })
-    } catch (e: any) {
-      rawResults.push({ device: d.name, error: e.message })
-    }
-  }
-  return rawResults
 })
 
 // Auth routes (public)
@@ -89,6 +72,8 @@ router
     // Devices - Mikrotik connection
     router.get('/devices/:id/status', [DevicesController, 'status'])
     router.post('/devices/:id/test', [DevicesController, 'testConnection'])
+    router.get('/devices/:id/interfaces', [DevicesController, 'interfaces'])
+    router.get('/devices/:id/traffic', [DevicesController, 'traffic'])
 
     // Products CRUD & Sync
     router.get('/products', [ProductsController, 'index'])
@@ -105,12 +90,35 @@ router
     router.delete('/customers/:id', [CustomersController, 'destroy'])
     router.post('/customers/:id/change-product', [CustomersController, 'changeProduct'])
 
+    // Dashboard
+    router.get('/admin/dashboard', [AdminDashboardController, 'index'])
+
     // Invoices
     router.get('/invoices', [InvoicesController, 'index'])
     router.post('/invoices', [InvoicesController, 'store'])
     router.put('/invoices/:id', [InvoicesController, 'update'])
     router.delete('/invoices/:id', [InvoicesController, 'destroy'])
+
+    // New: Manual Billing Triggers
+    router.post('/invoices/bulk-generate', [InvoicesController, 'bulkGenerate'])
+    router.post('/customers/:id/generate-invoice', [InvoicesController, 'generateForCustomer'])
+    router.post('/customers/:id/restore-service', [InvoicesController, 'restoreService'])
+  })
+  .use([middleware.auth(), middleware.admin()])
+
+router
+  .group(() => {
+    router.post('/invoices/:id/pay', [InvoicesController, 'createPayment'])
   })
   .use(middleware.auth())
+
+// Customer specific routes
+router
+  .group(() => {
+    router.get('/customer/dashboard', [CustomerDashboardController, 'index'])
+  })
+  .use(middleware.auth())
+
+router.post('/api/v1/callback/midtrans', [InvoicesController, 'webhook'])
 
 // trigger rebuild

@@ -158,4 +158,43 @@ export default class DevicesController {
             },
         })
     }
+
+    /**
+     * GET /devices/:id/interfaces
+     * List all interfaces on a Mikrotik device
+     */
+    async interfaces({ params, response }: HttpContext) {
+        const device = await Device.findOrFail(params.id)
+        const svc = MikrotikService.fromDevice(device)
+        const ifaces = await svc.getInterfaces()
+
+        return response.ok({
+            success: true,
+            data: ifaces,
+        })
+    }
+
+    /**
+     * GET /devices/:id/traffic?interface=ether1
+     * Get real-time RX/TX stats for a specific interface
+     */
+    async traffic({ params, request, response }: HttpContext) {
+        const device = await Device.findOrFail(params.id)
+        const interfaceName = request.input('interface', 'ether1')
+
+        const svc = MikrotikService.fromDevice(device)
+        const traffic = await svc.getInterfaceTraffic(interfaceName)
+
+        if (!traffic) {
+            return response.ok({
+                success: true,
+                data: { rxBps: 0, txBps: 0, rxBytes: 0, txBytes: 0, timestamp: Date.now() }
+            })
+        }
+
+        return response.ok({
+            success: true,
+            data: { ...traffic, timestamp: Date.now() }
+        })
+    }
 }

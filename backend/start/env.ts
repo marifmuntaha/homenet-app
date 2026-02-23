@@ -37,4 +37,12 @@ export default await Env.create(new URL('../', import.meta.url), {
   WHATSAPP_API_URL: Env.schema.string({ format: 'url' }),
   WHATSAPP_USERNAME: Env.schema.string(),
   WHATSAPP_PASSWORD: Env.schema.string(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for Midtrans
+  |----------------------------------------------------------
+  */
+  MIDTRANS_SERVER_KEY: Env.schema.string(),
+  MIDTRANS_CLIENT_KEY: Env.schema.string(),
 })

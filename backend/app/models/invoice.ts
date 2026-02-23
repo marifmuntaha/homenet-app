@@ -31,6 +31,18 @@ export default class Invoice extends BaseModel {
   @column()
   declare status: 'unpaid' | 'paid' | 'cancelled'
 
+  @column({ columnName: 'payment_type' })
+  declare paymentType: 'cash' | 'midtrans' | null
+
+  @column({ columnName: 'payment_method' })
+  declare paymentMethod: string | null
+
+  @column({ columnName: 'midtrans_snap_token' })
+  declare midtransSnapToken: string | null
+
+  @column({ columnName: 'midtrans_order_id' })
+  declare midtransOrderId: string | null
+
   @column.dateTime({ columnName: 'due_date' })
   declare dueDate: DateTime
 

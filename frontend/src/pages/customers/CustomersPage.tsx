@@ -7,7 +7,13 @@ import Layout from '../../components/Layout'
 
 export default function CustomersPage() {
     const [customers, setCustomers] = useState<Customer[]>([])
-    const [activePppoes, setActivePppoes] = useState<string[]>([])
+    const [activePppoes, setActivePppoes] = useState<Record<string, {
+        online: boolean,
+        ipAddress: string,
+        uptime: string,
+        callerId: string,
+        isIsolated: boolean
+    }>>({})
     const [loading, setLoading] = useState(true)
 
     // Pagination & Search
@@ -36,7 +42,7 @@ export default function CustomersPage() {
         try {
             const [res, activeRes] = await Promise.allSettled([
                 api.get<{ data: { data: Customer[], meta: { lastPage: number } } }>(`/customers?page=${page}&search=${search}`),
-                api.get<{ data: string[] }>('/customers/active-pppoe')
+                api.get<{ data: Record<string, any> }>('/customers/active-pppoe')
             ])
 
             if (res.status === 'fulfilled') {
@@ -220,20 +226,34 @@ export default function CustomersPage() {
                                             </td>
                                             <td>
                                                 {c.pppoeUser ? (
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                        <span
-                                                            style={{
-                                                                width: 10,
-                                                                height: 10,
-                                                                borderRadius: '50%',
-                                                                backgroundColor: activePppoes.includes(c.pppoeUser) ? 'var(--success)' : 'var(--text-muted)',
-                                                                boxShadow: activePppoes.includes(c.pppoeUser) ? '0 0 6px var(--success)' : 'none',
-                                                            }}
-                                                            title={activePppoes.includes(c.pppoeUser) ? 'Online (Aktif di Mikrotik)' : 'Offline'}
-                                                        />
-                                                        <span style={{ fontFamily: 'monospace', color: 'var(--text-primary)', padding: '2px 6px', background: 'var(--bg-secondary)', borderRadius: 4 }}>
-                                                            {c.pppoeUser}
-                                                        </span>
+                                                    <div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                                            <span
+                                                                style={{
+                                                                    width: 10,
+                                                                    height: 10,
+                                                                    borderRadius: '50%',
+                                                                    backgroundColor: activePppoes[c.pppoeUser]
+                                                                        ? (activePppoes[c.pppoeUser].isIsolated ? 'var(--danger)' : 'var(--success)')
+                                                                        : 'var(--text-muted)',
+                                                                    boxShadow: activePppoes[c.pppoeUser]
+                                                                        ? `0 0 6px ${activePppoes[c.pppoeUser].isIsolated ? 'var(--danger)' : 'var(--success)'}`
+                                                                        : 'none',
+                                                                }}
+                                                                title={activePppoes[c.pppoeUser]
+                                                                    ? `${activePppoes[c.pppoeUser].isIsolated ? 'Terisolir' : 'Online'} (Uptime: ${activePppoes[c.pppoeUser].uptime})`
+                                                                    : 'Offline'}
+                                                            />
+                                                            <span style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--text-primary)', fontSize: '13px' }}>
+                                                                {c.pppoeUser}
+                                                            </span>
+                                                        </div>
+                                                        {activePppoes[c.pppoeUser] && (
+                                                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column' }}>
+                                                                <span>IP: {activePppoes[c.pppoeUser].ipAddress}</span>
+                                                                <span>Up: {activePppoes[c.pppoeUser].uptime}</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ) : (
                                                     <span style={{ color: 'var(--text-muted)' }}>—</span>
