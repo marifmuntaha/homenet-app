@@ -12,6 +12,8 @@ export default class MidtransService {
         clientKey: env.get('MIDTRANS_CLIENT_KEY'),
     })
 
+    private static readonly MIDTRANS_FEE = 2000
+
     /**
      * Create a Snap transaction for an invoice
      */
@@ -22,10 +24,13 @@ export default class MidtransService {
             await customer.load('user')
         }
 
+        const baseAmount = Math.round(invoice.totalAmount)
+        const totalAmount = baseAmount + this.MIDTRANS_FEE
+
         const parameter = {
             transaction_details: {
                 order_id: `INV-${invoice.id}-${Date.now()}`,
-                gross_amount: Math.round(invoice.totalAmount),
+                gross_amount: totalAmount,
             },
             customer_details: {
                 first_name: customer?.fullName,
@@ -35,15 +40,21 @@ export default class MidtransService {
             item_details: [
                 {
                     id: `INV-${invoice.id}`,
-                    price: Math.round(invoice.totalAmount),
+                    price: baseAmount,
                     quantity: 1,
                     name: `Tagihan Homenet - ${invoice.month}`,
                 },
+                {
+                    id: 'FEE-MIDTRANS',
+                    price: this.MIDTRANS_FEE,
+                    quantity: 1,
+                    name: 'Biaya Layanan Online',
+                },
             ],
             callbacks: {
-                finish: 'http://localhost:5173/customer/dashboard',
-                error: 'http://localhost:5173/customer/dashboard',
-                pending: 'http://localhost:5173/customer/dashboard',
+                finish: 'https://homenet.own-server.web.id/customer/dashboard',
+                error: 'https://homenet.own-server.web.id/customer/dashboard',
+                pending: 'https://homenet.own-server.web.id/customer/dashboard',
             }
         }
 

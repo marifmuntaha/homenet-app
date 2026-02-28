@@ -186,7 +186,8 @@ export default function CustomerDashboardPage() {
                                     <FontAwesomeIcon icon={['fas', 'credit-card']} /> Bayar Sekarang (Online)
                                 </button>
                                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '10px' }}>
-                                    Metode: Virtual Account, E-Wallet, Kartu Kredit
+                                    Metode: Virtual Account, E-Wallet, QRIS <br />
+                                    <span style={{ color: 'var(--danger)', fontWeight: 600 }}>+ Biaya Layanan Rp 2.000</span>
                                 </p>
                             </div>
                         ) : (
