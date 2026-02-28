@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import {
     View, Text, FlatList, StyleSheet,
-    ActivityIndicator, RefreshControl,
+    ActivityIndicator, RefreshControl, Alert,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import * as WebBrowser from 'expo-web-browser'
 import api from '@/lib/api'
 import type { Invoice, PaginatedResponse } from '@/types'
 
@@ -43,6 +44,20 @@ export default function CustomerInvoicesScreen() {
         } catch { } finally { setLoading(false); setRefreshing(false) }
     }, [])
 
+    const handlePayOnline = async (invoice: Invoice) => {
+        try {
+            const res = await api.post<{ success: boolean; data: { token: string; redirect_url: string } }>(
+                `/invoices/${invoice.id}/pay`
+            )
+            if (res.data.success && res.data.data.redirect_url) {
+                await WebBrowser.openBrowserAsync(res.data.data.redirect_url)
+                fetch(1)
+            }
+        } catch (err: any) {
+            Alert.alert('Gagal', err.response?.data?.message || 'Gagal memulai pembayaran online')
+        }
+    }
+
     useEffect(() => { fetch(1) }, [fetch])
 
     const renderItem = ({ item }: { item: Invoice }) => {
@@ -80,6 +95,14 @@ export default function CustomerInvoicesScreen() {
                         {formatCurrency(item.totalAmount)}
                     </Text>
                 </View>
+
+                {/* Actions */}
+                {!isPaid && item.status === 'unpaid' && (
+                    <TouchableOpacity style={styles.payBtn} onPress={() => handlePayOnline(item)}>
+                        <Ionicons name="card-outline" size={14} color="#fff" />
+                        <Text style={styles.payBtnText}>Bayar Online (+ Rp 2.000)</Text>
+                    </TouchableOpacity>
+                )}
 
                 {/* Footer */}
                 <View style={styles.footer}>
@@ -165,6 +188,12 @@ const styles = StyleSheet.create({
     },
     totalLabel: { color: '#64748b', fontWeight: '700', fontSize: 13, textTransform: 'uppercase', letterSpacing: 0.5 },
     totalValue: { fontWeight: '800', fontSize: 20 },
+
+    payBtn: {
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+        backgroundColor: '#4f46e5', borderRadius: 10, padding: 12,
+    },
+    payBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
 
     footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#1f2937', paddingTop: 10 },
     footerLeft: { flexDirection: 'row', alignItems: 'center', gap: 4 },

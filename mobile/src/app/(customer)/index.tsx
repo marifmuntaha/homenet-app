@@ -5,9 +5,10 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import * as WebBrowser from 'expo-web-browser'
 import api from '@/lib/api'
 import { useAuth } from '@/contexts/auth-context'
-import type { CustomerDashboardData } from '@/types'
+import type { CustomerDashboardData, Invoice } from '@/types'
 
 const formatCurrency = (n: number) =>
     new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
@@ -45,6 +46,20 @@ export default function CustomerDashboard() {
     }, [])
 
     useEffect(() => { fetchData() }, [fetchData])
+
+    const handlePayOnline = async (invoice: Invoice) => {
+        try {
+            const res = await api.post<{ success: boolean; data: { token: string; redirect_url: string } }>(
+                `/invoices/${invoice.id}/pay`
+            )
+            if (res.data.success && res.data.data.redirect_url) {
+                await WebBrowser.openBrowserAsync(res.data.data.redirect_url)
+                fetchData()
+            }
+        } catch (err: any) {
+            Alert.alert('Gagal', err.response?.data?.message || 'Gagal memulai pembayaran online')
+        }
+    }
 
     const handlePayWA = () => {
         if (!data?.currentInvoice) return
@@ -176,10 +191,19 @@ export default function CustomerDashboard() {
                         />
 
                         {inv.status === 'unpaid' ? (
-                            <TouchableOpacity style={styles.payBtn} onPress={handlePayWA}>
-                                <Ionicons name="logo-whatsapp" size={18} color="#fff" />
-                                <Text style={styles.payBtnText}>Konfirmasi Pembayaran via WhatsApp</Text>
-                            </TouchableOpacity>
+                            <View style={{ gap: 8 }}>
+                                <TouchableOpacity style={styles.payOnlineBtn} onPress={() => handlePayOnline(inv)}>
+                                    <Ionicons name="card-outline" size={18} color="#fff" />
+                                    <Text style={styles.payBtnText}>Bayar Sekarang (Online)</Text>
+                                </TouchableOpacity>
+                                <Text style={styles.feeInfo}>
+                                    Metode: VA, QRIS, E-Wallet • <Text style={{ color: '#f87171' }}>+ Biaya Rp 2.000</Text>
+                                </Text>
+                                <TouchableOpacity style={styles.payBtn} onPress={handlePayWA}>
+                                    <Ionicons name="logo-whatsapp" size={18} color="#fff" />
+                                    <Text style={styles.payBtnText}>Konfirmasi via WhatsApp</Text>
+                                </TouchableOpacity>
+                            </View>
                         ) : (
                             <View style={styles.paidBanner}>
                                 <Ionicons name="checkmark-circle-outline" size={16} color="#34d399" />
@@ -242,8 +266,10 @@ const styles = StyleSheet.create({
     totalLabel: { color: '#94a3b8', fontWeight: '700', fontSize: 14 },
     totalValue: { color: '#f1f5f9', fontWeight: '800', fontSize: 20 },
 
-    payBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#16a34a', borderRadius: 12, padding: 14, marginTop: 6 },
+    payBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#16a34a', borderRadius: 12, padding: 14, marginTop: 4 },
+    payOnlineBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#4f46e5', borderRadius: 12, padding: 14, marginTop: 6 },
     payBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+    feeInfo: { color: '#64748b', fontSize: 11, textAlign: 'center', marginBottom: 4 },
     paidBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: 'rgba(52,211,153,0.08)', borderRadius: 12, padding: 14, marginTop: 6, borderWidth: 1, borderColor: 'rgba(52,211,153,0.2)' },
     paidText: { color: '#34d399', fontWeight: '700', fontSize: 14 },
 
