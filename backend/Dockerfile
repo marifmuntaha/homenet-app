@@ -16,8 +16,8 @@ RUN node ace build
 # Production stage
 FROM node:22-alpine
 
-# Install tzdata for timezone support
-RUN apk add --no-cache tzdata
+# Install dependencies for operations
+RUN apk add --no-cache tzdata supervisor
 ENV TZ=Asia/Jakarta
 
 WORKDIR /app
@@ -27,6 +27,7 @@ COPY --from=build /app/build ./build
 COPY --from=build /app/package*.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY docker-entrypoint.sh ./
+COPY supervisord.conf ./
 RUN chmod +x docker-entrypoint.sh
 
 # Environment variables

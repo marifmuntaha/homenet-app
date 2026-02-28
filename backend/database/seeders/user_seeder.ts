@@ -8,7 +8,7 @@ export default class extends BaseSeeder {
             { email: 'admin@homenet.id' },
             {
                 name: 'Administrator',
-                password: 'katasandi1234',
+                password: 'password',
                 role: User.ROLE_ADMINISTRATOR,
             }
         )
@@ -18,7 +18,7 @@ export default class extends BaseSeeder {
             { email: 'customer@homenet.id' },
             {
                 name: 'Customer',
-                password: 'katasandi1234',
+                password: 'password',
                 role: User.ROLE_CUSTOMER,
             }
         )
