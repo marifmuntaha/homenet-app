@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon'
 import type { HttpContext } from '@adonisjs/core/http'
 import Customer from '#models/customer'
 import Invoice from '#models/invoice'
@@ -30,7 +31,23 @@ export default class AdminDashboardController {
             })
         )
 
-        // 3. Recent Invoices
+        // 3. Income Stats
+        const now = DateTime.now()
+        const startOfMonth = now.startOf('month').toSQL()
+        const startOfYear = now.startOf('year').toSQL()
+
+        const monthlyPaidInvoices = await Invoice.query()
+            .where('status', 'paid')
+            .where('paid_at', '>=', startOfMonth!)
+
+        const yearlyPaidInvoices = await Invoice.query()
+            .where('status', 'paid')
+            .where('paid_at', '>=', startOfYear!)
+
+        const monthlyIncome = monthlyPaidInvoices.reduce((acc, curr) => acc + Number(curr.totalAmount), 0)
+        const yearlyIncome = yearlyPaidInvoices.reduce((acc, curr) => acc + Number(curr.totalAmount), 0)
+
+        // 4. Recent Invoices
         const recentInvoices = await Invoice.query()
             .preload('customer')
             .orderBy('created_at', 'desc')
@@ -43,7 +60,9 @@ export default class AdminDashboardController {
                     totalCustomers: Number(totalCustomers[0].$extras.total),
                     onlineCustomers: activeUsersSet.size,
                     unpaidInvoicesCount: unpaidInvoices.length,
-                    unpaidInvoicesAmount: unpaidAmount
+                    unpaidInvoicesAmount: unpaidAmount,
+                    monthlyIncome,
+                    yearlyIncome
                 },
                 recentInvoices
             }

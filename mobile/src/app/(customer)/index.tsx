@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import * as WebBrowser from 'expo-web-browser'
 import api from '@/lib/api'
+import { MIDTRANS_URL } from '@/lib/config'
 import { useAuth } from '@/contexts/auth-context'
 import type { CustomerDashboardData, Invoice } from '@/types'
 
@@ -49,11 +50,16 @@ export default function CustomerDashboard() {
 
     const handlePayOnline = async (invoice: Invoice) => {
         try {
-            const res = await api.post<{ success: boolean; data: { token: string; redirect_url: string } }>(
-                `/invoices/${invoice.id}/pay`
-            )
-            if (res.data.success && res.data.data.redirect_url) {
-                await WebBrowser.openBrowserAsync(res.data.data.redirect_url)
+            const res = await api.post<{ success: boolean; data: { token: string; redirect_url: string } }>(`/invoices/${invoice.id}/pay`)
+            const snapToken = res.data.data.token
+            const result = await WebBrowser.openBrowserAsync(`${MIDTRANS_URL}${snapToken}`)
+
+            if (result.type === 'cancel' || result.type === 'dismiss') {
+                // If the user cancels or dismisses the browser, we should re-fetch data
+                // to update the invoice status in case payment was actually made.
+                // The original code had `res.data.data.redirect_url` here, which is not
+                // part of the new response structure. Assuming the intent was to
+                // simply refresh the dashboard data.
                 fetchData()
             }
         } catch (err: any) {

@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
     logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, margin: 12, backgroundColor: 'rgba(239,68,68,0.08)', borderRadius: 14, padding: 18, borderWidth: 1, borderColor: 'rgba(239,68,68,0.2)' },
     logoutText: { color: '#f87171', fontWeight: '700', fontSize: 15 },
     emptyBox: { alignItems: 'center', padding: 48, gap: 10 },
-    emptyText: { color: '#374151', fontSize: 13 },
+    emptyText: { color: '#64748b', fontSize: 13 },
 })
 
 const mStyles = StyleSheet.create({

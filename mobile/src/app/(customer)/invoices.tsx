@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import {
     View, Text, FlatList, StyleSheet,
-    ActivityIndicator, RefreshControl, Alert,
+    ActivityIndicator, RefreshControl, Alert, TouchableOpacity,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import * as WebBrowser from 'expo-web-browser'
 import api from '@/lib/api'
+import { MIDTRANS_URL } from '@/lib/config'
 import type { Invoice, PaginatedResponse } from '@/types'
 
 const formatCurrency = (n: number) =>
@@ -46,11 +47,11 @@ export default function CustomerInvoicesScreen() {
 
     const handlePayOnline = async (invoice: Invoice) => {
         try {
-            const res = await api.post<{ success: boolean; data: { token: string; redirect_url: string } }>(
-                `/invoices/${invoice.id}/pay`
-            )
-            if (res.data.success && res.data.data.redirect_url) {
-                await WebBrowser.openBrowserAsync(res.data.data.redirect_url)
+            const res = await api.post<{ success: boolean; data: { token: string; redirect_url: string } }>(`/invoices/${invoice.id}/pay`)
+            const snapToken = res.data.data.token
+            const result = await WebBrowser.openBrowserAsync(`${MIDTRANS_URL}${snapToken}`)
+
+            if (result.type === 'cancel' || result.type === 'dismiss') {
                 fetch(1)
             }
         } catch (err: any) {

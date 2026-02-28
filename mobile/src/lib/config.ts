@@ -3,3 +3,8 @@
 // Device fisik di jaringan yang sama: http://192.168.x.x:3333
 // Jika pakai tunnel: biarkan localhost (tidak akan berfungsi untuk device)
 export const API_BASE_URL = 'https://backend-homenet.own-server.web.id'
+
+// Midtrans Snap URL:
+// Sandbox: https://app.sandbox.midtrans.com/snap/v2/vtweb/
+// Production: https://app.midtrans.com/snap/v2/vtweb/
+export const MIDTRANS_URL = 'https://app.midtrans.com/snap/v2/vtweb/'

@@ -35,7 +35,12 @@ export default function CustomersScreen() {
         } catch { } finally { setLoading(false); setRefreshing(false) }
     }, [search])
 
-    useEffect(() => { fetchCustomers(1) }, [search])
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchCustomers(1)
+        }, 500)
+        return () => clearTimeout(timer)
+    }, [search])
 
     const handleDelete = (c: Customer) => {
         Alert.alert('Hapus Pelanggan', `Hapus "${c.fullName}"?`, [
@@ -96,6 +101,7 @@ export default function CustomersScreen() {
                     <TextInput
                         style={styles.searchInput}
                         placeholder="Cari pelanggan..."
+                        placeholderTextColor="#64748b"
                         value={search}
                         onChangeText={setSearch}
                         autoCapitalize="none"
@@ -320,7 +326,7 @@ const styles = StyleSheet.create({
     iconBtn: { width: 34, height: 34, borderRadius: 10, backgroundColor: 'rgba(129,140,248,0.1)', alignItems: 'center', justifyContent: 'center' },
     iconBtnRed: { backgroundColor: 'rgba(248,113,113,0.1)' },
     emptyBox: { alignItems: 'center', padding: 48, gap: 10 },
-    emptyText: { color: '#374151', fontSize: 13 },
+    emptyText: { color: '#64748b', fontSize: 13 },
 })
 
 const mStyles = StyleSheet.create({

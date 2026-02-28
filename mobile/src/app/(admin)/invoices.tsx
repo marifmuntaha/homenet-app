@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import {
     View, Text, FlatList, StyleSheet, TouchableOpacity,
-    Alert, ActivityIndicator, RefreshControl, Linking,
+    Alert, ActivityIndicator, RefreshControl, Linking, TextInput,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -36,20 +36,26 @@ export default function InvoicesScreen() {
     const [refreshing, setRefreshing] = useState(false)
     const [generating, setGenerating] = useState(false)
     const [filter, setFilter] = useState('')
+    const [search, setSearch] = useState('')
     const [page, setPage] = useState(1)
     const [lastPage, setLastPage] = useState(1)
 
-    const fetch = useCallback(async (p = 1, s = filter) => {
+    const fetch = useCallback(async (p = 1, s = filter, q = search) => {
         try {
-            const res = await api.get<PaginatedResponse<Invoice>>(`/invoices?page=${p}&status=${s}&year=${new Date().getFullYear()}`)
+            const res = await api.get<PaginatedResponse<Invoice>>(`/invoices?page=${p}&status=${s}&search=${q}&year=${new Date().getFullYear()}`)
             const list = res.data.data?.data ?? []
             const meta = res.data.data?.meta as any
             setInvoices(p === 1 ? list : prev => [...prev, ...list])
             setLastPage(meta?.last_page ?? 1); setPage(p)
         } catch { } finally { setLoading(false); setRefreshing(false) }
-    }, [filter])
+    }, [filter, search])
 
-    useEffect(() => { fetch(1) }, [filter])
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetch(1)
+        }, 500)
+        return () => clearTimeout(timer)
+    }, [filter, search])
 
     const handlePaid = (inv: Invoice) =>
         Alert.alert('Konfirmasi Bayar', `Tandai tagihan ${inv.customer?.fullName} bulan ${formatMonth(inv.month)} sebagai sudah dibayar (CASH)?`, [
@@ -139,6 +145,26 @@ export default function InvoicesScreen() {
 
     return (
         <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+            {/* Toolbar */}
+            <View style={styles.toolbar}>
+                <View style={styles.searchBox}>
+                    <Ionicons name="search-outline" size={16} color="#475569" />
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Cari pelanggan / tagihan..."
+                        value={search}
+                        onChangeText={setSearch}
+                        placeholderTextColor="#64748b"
+                        autoCapitalize="none"
+                    />
+                    {search ? (
+                        <TouchableOpacity onPress={() => setSearch('')}>
+                            <Ionicons name="close-circle" size={16} color="#475569" />
+                        </TouchableOpacity>
+                    ) : null}
+                </View>
+            </View>
+
             {/* Filter chips */}
             <View style={styles.filterRow}>
                 {FILTERS.map(f => (
@@ -208,6 +234,13 @@ function MetaItem({ icon, label, value, bold = false }: { icon: keyof typeof Ion
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#080f1a' },
+    toolbar: { paddingHorizontal: 12, paddingTop: 12, paddingBottom: 4 },
+    searchBox: {
+        flexDirection: 'row', alignItems: 'center', gap: 8,
+        backgroundColor: '#111827', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10,
+        borderWidth: 1, borderColor: '#1f2937',
+    },
+    searchInput: { flex: 1, color: '#f1f5f9', fontSize: 14, backgroundColor: 'transparent', borderWidth: 0, padding: 0 },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 },
     headerTitle: { color: '#f1f5f9', fontSize: 20, fontWeight: '800' },
     bottomBar: { paddingHorizontal: 20, paddingVertical: 12, backgroundColor: 'transparent' },
@@ -240,5 +273,5 @@ const styles = StyleSheet.create({
     btnPay: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(52,211,153,0.08)', borderRadius: 10, padding: 10, borderWidth: 1, borderColor: 'rgba(52,211,153,0.2)' },
     btnPayText: { color: '#34d399', fontWeight: '600', fontSize: 13 },
     emptyBox: { alignItems: 'center', padding: 48, gap: 10 },
-    emptyText: { color: '#374151', fontSize: 13 },
+    emptyText: { color: '#64748b', fontSize: 13 },
 })

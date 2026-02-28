@@ -17,6 +17,7 @@ export default class InvoicesController {
         const limit = request.input('limit', 10)
         const status = request.input('status')
         const customerId = request.input('customer_id')
+        const search = request.input('search')
         const year = request.input('year')
         const monthFilter = request.input('month') // e.g., '03'
 
@@ -24,6 +25,14 @@ export default class InvoicesController {
             .preload('customer')
             .orderBy('month', 'desc')
             .orderBy('id', 'desc')
+
+        if (search) {
+            query.whereHas('customer', (q) => {
+                q.whereILike('full_name', `%${search}%`)
+                    .orWhereILike('phone', `%${search}%`)
+                    .orWhereILike('pppoe_user', `%${search}%`)
+            })
+        }
 
         if (status) {
             query.where('status', status)

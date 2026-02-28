@@ -114,6 +114,8 @@ export interface DashboardStats {
     onlineCustomers: number
     unpaidInvoicesCount: number
     unpaidInvoicesAmount: number
+    monthlyIncome: number
+    yearlyIncome: number
 }
 
 export interface DashboardData {

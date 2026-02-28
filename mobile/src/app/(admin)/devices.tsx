@@ -15,18 +15,24 @@ export default function DevicesScreen() {
     const [devices, setDevices] = useState<Device[]>([])
     const [loading, setLoading] = useState(true)
     const [refreshing, setRefreshing] = useState(false)
+    const [search, setSearch] = useState('')
     const [showModal, setShowModal] = useState(false)
     const [editTarget, setEditTarget] = useState<Device | null>(null)
 
-    const fetchDevices = useCallback(async () => {
+    const fetchDevices = useCallback(async (q = search) => {
         try {
-            const res = await api.get<any>('/devices')
+            const res = await api.get<any>(`/devices?search=${q}`)
             const raw = res.data?.data
             setDevices(Array.isArray(raw) ? raw : (raw?.data ?? []))
         } catch { } finally { setLoading(false); setRefreshing(false) }
-    }, [])
+    }, [search])
 
-    useEffect(() => { fetchDevices() }, [fetchDevices])
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchDevices()
+        }, 500)
+        return () => clearTimeout(timer)
+    }, [search])
 
     const handleDelete = (d: Device) => {
         Alert.alert('Hapus Perangkat', `Hapus "${d.name}"?`, [
@@ -70,9 +76,21 @@ export default function DevicesScreen() {
     return (
         <View style={[styles.container, { paddingBottom: insets.bottom }]}>
             <View style={styles.toolbar}>
-                <View style={{ flex: 1 }}>
-                    <Text style={styles.toolbarLabel}>Router Mikrotik</Text>
-                    <Text style={styles.toolbarSub}>{devices.length} perangkat terdaftar</Text>
+                <View style={styles.searchBox}>
+                    <Ionicons name="search-outline" size={16} color="#475569" />
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Cari router..."
+                        value={search}
+                        onChangeText={setSearch}
+                        placeholderTextColor="#64748b"
+                        autoCapitalize="none"
+                    />
+                    {search ? (
+                        <TouchableOpacity onPress={() => setSearch('')}>
+                            <Ionicons name="close-circle" size={16} color="#475569" />
+                        </TouchableOpacity>
+                    ) : null}
                 </View>
                 <TouchableOpacity style={styles.addBtn} onPress={() => { setEditTarget(null); setShowModal(true) }}>
                     <Ionicons name="add" size={20} color="#fff" />
@@ -193,7 +211,13 @@ function DeviceModal({ visible, device, onClose }: {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#080f1a' },
-    toolbar: { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#0d1117' },
+    toolbar: { flexDirection: 'row', alignItems: 'center', padding: 12, gap: 10, borderBottomWidth: 1, borderBottomColor: '#0d1117' },
+    searchBox: {
+        flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8,
+        backgroundColor: '#111827', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10,
+        borderWidth: 1, borderColor: '#1f2937',
+    },
+    searchInput: { flex: 1, color: '#f1f5f9', fontSize: 14, backgroundColor: 'transparent', borderWidth: 0, padding: 0 },
     toolbarLabel: { color: '#e2e8f0', fontWeight: '700', fontSize: 16 },
     toolbarSub: { color: '#475569', fontSize: 12, marginTop: 2 },
     addBtn: { backgroundColor: '#4f46e5', borderRadius: 12, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
@@ -209,7 +233,7 @@ const styles = StyleSheet.create({
     iconBtnRed: { backgroundColor: 'rgba(248,113,113,0.1)' },
     emptyBox: { alignItems: 'center', padding: 48, gap: 10 },
     emptyTitle: { color: '#e2e8f0', fontWeight: '600', fontSize: 16 },
-    emptyText: { color: '#475569', fontSize: 13, textAlign: 'center' },
+    emptyText: { color: '#64748b', fontSize: 13, textAlign: 'center' },
 })
 
 const mStyles = StyleSheet.create({

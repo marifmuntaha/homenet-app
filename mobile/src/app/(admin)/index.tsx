@@ -80,6 +80,8 @@ export default function AdminDashboard() {
                 <StatCard icon="wifi-outline" label="Online" value={String(stats?.onlineCustomers ?? 0)} accent="#34d399" />
                 <StatCard icon="receipt-outline" label="Tertunggak" value={String(stats?.unpaidInvoicesCount ?? 0)} accent="#fb923c" />
                 <StatCard icon="cash-outline" label="Nilai Tunggak" value={formatCurrency(stats?.unpaidInvoicesAmount ?? 0)} accent="#f87171" />
+                <StatCard icon="wallet-outline" label="Bulan Ini" value={formatCurrency(stats?.monthlyIncome ?? 0)} accent="#34d399" />
+                <StatCard icon="stats-chart-outline" label="Tahun Ini" value={formatCurrency(stats?.yearlyIncome ?? 0)} accent="#818cf8" />
             </View>
 
             {/* Section: Tagihan Terbaru */}
