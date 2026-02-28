@@ -3,6 +3,7 @@ import Layout from '../../components/Layout'
 import api from '../../lib/axios'
 import type { User, PaginatedResponse } from '../../types'
 import UserModal from './UserModal'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([])
@@ -66,21 +67,27 @@ export default function UsersPage() {
             {/* Stats */}
             <div className="stats-grid">
                 <div className="stat-card">
-                    <div className="stat-icon stat-icon-purple">👥</div>
+                    <div className="stat-icon stat-icon-purple">
+                        <FontAwesomeIcon icon={['fas', 'users']} className="fa-icon-stat" />
+                    </div>
                     <div className="stat-info">
                         <p>Total User</p>
                         <h3>{meta.total}</h3>
                     </div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon stat-icon-amber">👑</div>
+                    <div className="stat-icon stat-icon-amber">
+                        <FontAwesomeIcon icon={['fas', 'crown']} className="fa-icon-stat" />
+                    </div>
                     <div className="stat-info">
                         <p>Administrator</p>
                         <h3>{adminCount}</h3>
                     </div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon stat-icon-green">🧑‍💼</div>
+                    <div className="stat-icon stat-icon-green">
+                        <FontAwesomeIcon icon={['fas', 'user-tie']} className="fa-icon-stat" />
+                    </div>
                     <div className="stat-info">
                         <p>Customer</p>
                         <h3>{customerCount}</h3>
@@ -94,7 +101,9 @@ export default function UsersPage() {
                     <h2 className="card-title">Daftar User</h2>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                         <div className="search-box">
-                            <span className="search-icon">🔍</span>
+                            <span className="search-icon">
+                                <FontAwesomeIcon icon={['fas', 'magnifying-glass']} />
+                            </span>
                             <input
                                 className="form-input"
                                 placeholder="Cari nama, email, HP..."
@@ -104,7 +113,7 @@ export default function UsersPage() {
                             />
                         </div>
                         <button className="btn btn-primary" onClick={openCreate}>
-                            + Tambah User
+                            <FontAwesomeIcon icon={['fas', 'plus']} /> Tambah User
                         </button>
                     </div>
                 </div>
@@ -117,7 +126,9 @@ export default function UsersPage() {
                         </div>
                     ) : users.length === 0 ? (
                         <div className="empty-state">
-                            <div className="empty-state-icon">👤</div>
+                            <div className="empty-state-icon">
+                                <FontAwesomeIcon icon={['fas', 'user-slash']} />
+                            </div>
                             <h3>Tidak ada user</h3>
                             <p>{search ? `Tidak ditemukan hasil untuk "${search}"` : 'Belum ada user yang terdaftar'}</p>
                         </div>
@@ -160,12 +171,12 @@ export default function UsersPage() {
                                         <td>{user.phone ?? <span style={{ color: 'var(--text-muted)' }}>—</span>}</td>
                                         <td>
                                             <span className={`badge ${user.phone_verified_at ? 'badge-verified' : 'badge-unverified'}`}>
-                                                {user.phone_verified_at ? '✓ Verified' : '✗ Unverified'}
+                                                {user.phone_verified_at ? <><FontAwesomeIcon icon={['fas', 'check']} /> Verified</> : <><FontAwesomeIcon icon={['fas', 'xmark']} /> Unverified</>}
                                             </span>
                                         </td>
                                         <td>
                                             <span className={`badge ${user.role === 1 ? 'badge-admin' : 'badge-customer'}`}>
-                                                {user.role === 1 ? '👑 Administrator' : '🧑 Customer'}
+                                                {user.role === 1 ? <><FontAwesomeIcon icon={['fas', 'crown']} /> Administrator</> : <><FontAwesomeIcon icon={['fas', 'user-tie']} /> Customer</>}
                                             </span>
                                         </td>
                                         <td style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
@@ -174,10 +185,10 @@ export default function UsersPage() {
                                         <td>
                                             <div className="table-actions">
                                                 <button className="btn btn-ghost btn-sm" onClick={() => openEdit(user)}>
-                                                    ✏️ Edit
+                                                    <FontAwesomeIcon icon={['fas', 'pen-to-square']} /> Edit
                                                 </button>
                                                 <button className="btn btn-danger btn-sm" onClick={() => setDeleteTarget(user)}>
-                                                    🗑️
+                                                    <FontAwesomeIcon icon={['fas', 'trash']} />
                                                 </button>
                                             </div>
                                         </td>
@@ -229,7 +240,9 @@ export default function UsersPage() {
             {deleteTarget && (
                 <div className="confirm-overlay">
                     <div className="confirm-box">
-                        <div className="confirm-icon">🗑️</div>
+                        <div className="confirm-icon">
+                            <FontAwesomeIcon icon={['fas', 'triangle-exclamation']} style={{ color: 'var(--danger)' }} />
+                        </div>
                         <h3>Hapus User</h3>
                         <p>
                             Anda yakin ingin menghapus <strong style={{ color: 'var(--text-primary)' }}>{deleteTarget.name}</strong>?
@@ -240,7 +253,7 @@ export default function UsersPage() {
                                 Batal
                             </button>
                             <button className="btn btn-danger" onClick={handleDelete} disabled={isDeleting}>
-                                {isDeleting ? <><span className="spinner" /> Menghapus...</> : 'Ya, Hapus'}
+                                {isDeleting ? <><span className="spinner" /> Menghapus...</> : <><FontAwesomeIcon icon={['fas', 'trash']} /> Ya, Hapus</>}
                             </button>
                         </div>
                     </div>

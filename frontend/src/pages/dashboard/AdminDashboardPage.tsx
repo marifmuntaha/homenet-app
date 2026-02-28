@@ -4,6 +4,7 @@ import Layout from '../../components/Layout'
 import MikrotikTrafficChart from '../../components/MikrotikTrafficChart'
 import type { Invoice } from '../../types'
 import { NavLink } from 'react-router-dom'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 interface DashboardStats {
     totalCustomers: number
@@ -67,7 +68,9 @@ export default function AdminDashboardPage() {
         <Layout title="Dashboard Admin">
             <div className="stats-grid" style={{ marginBottom: '32px' }}>
                 <div className="stat-card">
-                    <div className="stat-icon stat-icon-blue">👥</div>
+                    <div className="stat-icon stat-icon-blue">
+                        <FontAwesomeIcon icon={['fas', 'users']} className="fa-icon-stat" />
+                    </div>
                     <div className="stat-info">
                         <p>Total Pelanggan</p>
                         <h3>{data?.stats.totalCustomers || 0}</h3>
@@ -75,7 +78,9 @@ export default function AdminDashboardPage() {
                     </div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon stat-icon-green">🌐</div>
+                    <div className="stat-icon stat-icon-green">
+                        <FontAwesomeIcon icon={['fas', 'wifi']} className="fa-icon-stat" />
+                    </div>
                     <div className="stat-info">
                         <p>Pelanggan Online</p>
                         <h3 style={{ color: 'var(--success)' }}>{data?.stats.onlineCustomers || 0}</h3>
@@ -83,7 +88,9 @@ export default function AdminDashboardPage() {
                     </div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon stat-icon-amber">🧾</div>
+                    <div className="stat-icon stat-icon-amber">
+                        <FontAwesomeIcon icon={['fas', 'file-invoice-dollar']} className="fa-icon-stat" />
+                    </div>
                     <div className="stat-info">
                         <p>Tagihan Tertunggak</p>
                         <h3 style={{ color: 'var(--warning)' }}>{data?.stats.unpaidInvoicesCount || 0}</h3>

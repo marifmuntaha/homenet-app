@@ -1,4 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
+import WhatsappService from '#services/whatsapp_service'
 import Invoice from '#models/invoice'
 import User from '#models/user'
 import Customer from '#models/customer'
@@ -251,6 +252,46 @@ export default class InvoicesController {
             return response.badRequest({
                 success: false,
                 message: error.message
+            })
+        }
+    }
+
+    /**
+     * POST /invoices/:id/notify
+     * Send WhatsApp notification via system
+     */
+    async notify({ params, response }: HttpContext) {
+        const invoice = await Invoice.query()
+            .where('id', params.id)
+            .preload('customer')
+            .firstOrFail()
+
+        if (!invoice.customer.phone) {
+            return response.badRequest({
+                success: false,
+                message: 'Pelanggan tidak memiliki nomor telepon'
+            })
+        }
+
+        const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+        const [yr, mo] = invoice.month.split('-')
+        const monthLabel = `${monthNames[parseInt(mo) - 1]} ${yr}`
+
+        const formatIDR = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
+        const dueDateLabel = invoice.dueDate.setLocale('id').toFormat('dd MMMM yyyy')
+
+        const messageText = `Halo Bapak/Ibu *${invoice.customer.fullName}*,\n\nTagihan internet untuk bulan *${monthLabel}*:\n- Total: *${formatIDR(invoice.totalAmount)}*\n- Jatuh Tempo: *${dueDateLabel}*\n\nMohon segera melakukan pembayaran.\n_Homenet Team_`
+
+        try {
+            await WhatsappService.sendMessage(invoice.customer.phone, messageText)
+            return response.ok({
+                success: true,
+                message: 'Notifikasi WhatsApp telah dikirim ke sistem'
+            })
+        } catch (error: any) {
+            return response.internalServerError({
+                success: false,
+                message: 'Gagal mengirim notifikasi: ' + error.message
             })
         }
     }

@@ -97,6 +97,7 @@ router
     router.get('/invoices', [InvoicesController, 'index'])
     router.post('/invoices', [InvoicesController, 'store'])
     router.put('/invoices/:id', [InvoicesController, 'update'])
+    router.post('/invoices/:id/notify', [InvoicesController, 'notify'])
     router.delete('/invoices/:id', [InvoicesController, 'destroy'])
 
     // New: Manual Billing Triggers

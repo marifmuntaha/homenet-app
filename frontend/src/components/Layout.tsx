@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import api from '../lib/axios'
 import type { ReactNode } from 'react'
 import { useState, useEffect } from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 interface LayoutProps {
     children: ReactNode
@@ -41,7 +42,9 @@ export default function Layout({ children, title }: LayoutProps) {
             {/* Sidebar */}
             <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
                 <div className="sidebar-logo">
-                    <div className="sidebar-logo-icon">🏠</div>
+                    <div className="sidebar-logo-icon">
+                        <FontAwesomeIcon icon={['fas', 'wifi']} />
+                    </div>
                     <div className="sidebar-logo-text">
                         <h1>Homenet</h1>
                         <span>Admin Panel</span>
@@ -56,40 +59,55 @@ export default function Layout({ children, title }: LayoutProps) {
                                 to="/dashboard"
                                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                             >
-                                <span className="nav-icon">📊</span>
+                                <span className="nav-icon fa-icon-nav">
+                                    <FontAwesomeIcon icon={['fas', 'laptop']} />
+                                </span>
                                 Dashboard
-                            </NavLink>
-                            <NavLink
-                                to="/users"
-                                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                            >
-                                <span className="nav-icon">👥</span>
-                                User Management
                             </NavLink>
                             <NavLink
                                 to="/devices"
                                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                             >
-                                <span className="nav-icon">🖥️</span>
-                                Device Mikrotik
+                                <span className="nav-icon fa-icon-nav">
+                                    <FontAwesomeIcon icon={['fas', 'server']} />
+                                </span>
+                                Perangkat
                             </NavLink>
                             <NavLink
                                 to="/products"
                                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                             >
-                                <span className="nav-icon">📦</span> Product & Bandwidth
+                                <span className="nav-icon fa-icon-nav">
+                                    <FontAwesomeIcon icon={['fas', 'box']} />
+                                </span>
+                                Produk
                             </NavLink>
                             <NavLink
                                 to="/customers"
                                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                             >
-                                <span className="nav-icon">👥</span> Manajemen Pelanggan
+                                <span className="nav-icon fa-icon-nav">
+                                    <FontAwesomeIcon icon={['fas', 'user-group']} />
+                                </span>
+                                Pelanggan
                             </NavLink>
                             <NavLink
                                 to="/invoices"
                                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                             >
-                                <span className="nav-icon">🧾</span> Manajemen Tagihan
+                                <span className="nav-icon fa-icon-nav">
+                                    <FontAwesomeIcon icon={['fas', 'file-invoice-dollar']} />
+                                </span>
+                                Tagihan
+                            </NavLink>
+                            <NavLink
+                                to="/users"
+                                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                            >
+                                <span className="nav-icon fa-icon-nav">
+                                    <FontAwesomeIcon icon={['fas', 'users']} />
+                                </span>
+                                Pengguna
                             </NavLink>
                         </>
                     ) : (
@@ -98,14 +116,18 @@ export default function Layout({ children, title }: LayoutProps) {
                                 to="/customer/dashboard"
                                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                             >
-                                <span className="nav-icon">🏠</span>
+                                <span className="nav-icon fa-icon-nav">
+                                    <FontAwesomeIcon icon={['fas', 'house']} />
+                                </span>
                                 Dashboard Saya
                             </NavLink>
                             <NavLink
                                 to="/customer/invoices"
                                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                             >
-                                <span className="nav-icon">🧾</span>
+                                <span className="nav-icon fa-icon-nav">
+                                    <FontAwesomeIcon icon={['fas', 'receipt']} />
+                                </span>
                                 Tagihan Saya
                             </NavLink>
                         </>
@@ -124,7 +146,7 @@ export default function Layout({ children, title }: LayoutProps) {
                             </div>
                         </div>
                         <button className="logout-btn" onClick={handleLogout} title="Logout">
-                            ⟵
+                            <FontAwesomeIcon icon={['fas', 'right-from-bracket']} />
                         </button>
                     </div>
                 </div>
@@ -138,7 +160,7 @@ export default function Layout({ children, title }: LayoutProps) {
                             className="menu-toggle"
                             onClick={() => setIsSidebarOpen(true)}
                         >
-                            ☰
+                            <FontAwesomeIcon icon={['fas', 'bars']} />
                         </button>
                         <h2 className="topbar-title">{title}</h2>
                     </div>

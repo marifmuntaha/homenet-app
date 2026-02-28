@@ -4,6 +4,7 @@ import api from '../../lib/axios'
 import CustomerModal from './CustomerModal'
 import ChangeProductModal from './ChangeProductModal'
 import Layout from '../../components/Layout'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 export default function CustomersPage() {
     const [customers, setCustomers] = useState<Customer[]>([])
@@ -104,21 +105,27 @@ export default function CustomersPage() {
             {/* Stats */}
             <div className="stats-grid">
                 <div className="stat-card">
-                    <div className="stat-icon stat-icon-blue">👥</div>
+                    <div className="stat-icon stat-icon-blue">
+                        <FontAwesomeIcon icon={['fas', 'users']} className="fa-icon-stat" />
+                    </div>
                     <div className="stat-info">
                         <p>Total Pelanggan</p>
                         <h3>{lastPage > 0 ? customers.length + (page - 1) * 15 : 0}</h3>
                     </div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon stat-icon-green">📦</div>
+                    <div className="stat-icon stat-icon-green">
+                        <FontAwesomeIcon icon={['fas', 'box']} className="fa-icon-stat" />
+                    </div>
                     <div className="stat-info">
                         <p>Pelanggan Berlangganan</p>
                         <h3>{customers.filter(c => c.subscriptions?.some(s => s.status === 'active')).length}</h3>
                     </div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon stat-icon-amber">⚠️</div>
+                    <div className="stat-icon stat-icon-amber">
+                        <FontAwesomeIcon icon={['fas', 'triangle-exclamation']} className="fa-icon-stat" />
+                    </div>
                     <div className="stat-info">
                         <p>Belum Aktif PPPoE</p>
                         <h3>{customers.filter(c => !c.pppoeUser).length}</h3>
@@ -132,7 +139,9 @@ export default function CustomersPage() {
                     <h2 className="card-title">Daftar Pelanggan</h2>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                         <div className="search-box">
-                            <span className="search-icon">🔍</span>
+                            <span className="search-icon">
+                                <FontAwesomeIcon icon={['fas', 'magnifying-glass']} />
+                            </span>
                             <input
                                 className="form-input"
                                 placeholder="Cari nama, telp, username PPPoE..."
@@ -145,7 +154,7 @@ export default function CustomersPage() {
                             />
                         </div>
                         <button className="btn btn-primary" onClick={openAddModal}>
-                            + Tambah Pelanggan
+                            <FontAwesomeIcon icon={['fas', 'user-plus']} /> Tambah Pelanggan
                         </button>
                     </div>
                 </div>
@@ -158,7 +167,9 @@ export default function CustomersPage() {
                         </div>
                     ) : customers.length === 0 ? (
                         <div className="empty-state">
-                            <div className="empty-state-icon">👥</div>
+                            <div className="empty-state-icon">
+                                <FontAwesomeIcon icon={['fas', 'user-group']} />
+                            </div>
                             <h3>Tidak ada pelanggan</h3>
                             <p>{search ? `Tidak ditemukan hasil untuk "${search}"` : 'Belum ada pelanggan yang terdaftar'}</p>
                         </div>
@@ -206,7 +217,7 @@ export default function CustomersPage() {
                                                                 rel="noreferrer"
                                                                 style={{ fontSize: '0.8rem', color: 'var(--accent)', textDecoration: 'none' }}
                                                             >
-                                                                📍 Buka di Maps
+                                                                <FontAwesomeIcon icon={['fas', 'map-location-dot']} /> Buka di Maps
                                                             </a>
                                                         ) : (
                                                             <span className="text-muted" style={{ fontSize: '0.8rem' }}>Lokasi tdk diatur</span>
@@ -214,7 +225,7 @@ export default function CustomersPage() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td>{c.phone ? <span>📞 {c.phone}</span> : <span style={{ color: 'var(--text-muted)' }}>—</span>}</td>
+                                            <td>{c.phone ? <span><FontAwesomeIcon icon={['fas', 'phone']} /> {c.phone}</span> : <span style={{ color: 'var(--text-muted)' }}>—</span>}</td>
                                             <td>
                                                 {activeSub?.product ? (
                                                     <span className="badge badge-success" style={{ fontSize: '0.9rem' }}>
@@ -266,20 +277,20 @@ export default function CustomersPage() {
                                                         onClick={() => openChangeProductDialog(c)}
                                                         title="Ganti Paket"
                                                     >
-                                                        📦 Ubah Pkt
+                                                        <FontAwesomeIcon icon={['fas', 'box']} /> Ubah Pkt
                                                     </button>
                                                     <button
                                                         className="btn btn-ghost btn-sm"
                                                         onClick={() => openEditModal(c)}
                                                     >
-                                                        ✏️ Edit
+                                                        <FontAwesomeIcon icon={['fas', 'pen-to-square']} /> Edit
                                                     </button>
                                                     <button
                                                         className="btn btn-danger btn-sm"
                                                         onClick={() => handleDelete(c)}
                                                         disabled={deletingId === c.id}
                                                     >
-                                                        {deletingId === c.id ? '⏳' : '🗑️'}
+                                                        {deletingId === c.id ? <span className="spinner" /> : <FontAwesomeIcon icon={['fas', 'trash']} />}
                                                     </button>
                                                 </div>
                                             </td>

@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import api from '../../lib/axios'
 import { useAuth } from '../../contexts/AuthContext'
 import type { AuthResponse } from '../../types'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 const registerSchema = z.object({
     name: z.string().min(2, 'Nama minimal 2 karakter'),
@@ -107,20 +108,22 @@ export default function RegisterPage() {
         <div className="auth-page">
             <div className="auth-card">
                 <div className="auth-header">
-                    <div className="auth-logo">🏠</div>
+                    <div className="auth-logo">
+                        <FontAwesomeIcon icon={['fas', 'wifi']} />
+                    </div>
                     <h2>{step === 'register' ? 'Buat Akun Baru' : 'Verifikasi Nomor WhatsApp'}</h2>
                     <p>{step === 'register' ? 'Daftarkan diri Anda di Homenet' : 'Masukkan 6 digit kode OTP yang telah dikirim ke WhatsApp Anda.'}</p>
                 </div>
 
                 {error && (
                     <div className="alert alert-error">
-                        <span>⚠️</span> {error}
+                        <FontAwesomeIcon icon={['fas', 'triangle-exclamation']} /> {error}
                     </div>
                 )}
 
                 {successMessage && (
-                    <div className="alert alert-success" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', padding: '0.75rem', borderRadius: '0.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span>✅</span> {successMessage}
+                    <div className="alert alert-success" style={{ marginBottom: '1rem' }}>
+                        <FontAwesomeIcon icon={['fas', 'circle-check']} /> {successMessage}
                     </div>
                 )}
 
@@ -133,7 +136,7 @@ export default function RegisterPage() {
                                 className={`form-input ${errors.name ? 'error' : ''}`}
                                 placeholder="John Doe"
                             />
-                            {errors.name && <p className="form-error">⚠ {errors.name.message}</p>}
+                            {errors.name && <p className="form-error"><FontAwesomeIcon icon={['fas', 'triangle-exclamation']} /> {errors.name.message}</p>}
                         </div>
 
                         <div className="form-group">
@@ -144,7 +147,7 @@ export default function RegisterPage() {
                                 placeholder="nama@email.com"
                                 type="email"
                             />
-                            {errors.email && <p className="form-error">⚠ {errors.email.message}</p>}
+                            {errors.email && <p className="form-error"><FontAwesomeIcon icon={['fas', 'triangle-exclamation']} /> {errors.email.message}</p>}
                         </div>
 
                         <div className="form-group">
@@ -155,7 +158,7 @@ export default function RegisterPage() {
                                 placeholder="081234567890"
                                 type="tel"
                             />
-                            {errors.phone && <p className="form-error">⚠ {errors.phone.message}</p>}
+                            {errors.phone && <p className="form-error"><FontAwesomeIcon icon={['fas', 'triangle-exclamation']} /> {errors.phone.message}</p>}
                         </div>
 
                         <div className="form-row">
@@ -167,7 +170,7 @@ export default function RegisterPage() {
                                     placeholder="••••••••"
                                     type="password"
                                 />
-                                {errors.password && <p className="form-error">⚠ {errors.password.message}</p>}
+                                {errors.password && <p className="form-error"><FontAwesomeIcon icon={['fas', 'triangle-exclamation']} /> {errors.password.message}</p>}
                             </div>
 
                             <div className="form-group">
@@ -179,7 +182,7 @@ export default function RegisterPage() {
                                     type="password"
                                 />
                                 {errors.password_confirmation && (
-                                    <p className="form-error">⚠ {errors.password_confirmation.message}</p>
+                                    <p className="form-error"><FontAwesomeIcon icon={['fas', 'triangle-exclamation']} /> {errors.password_confirmation.message}</p>
                                 )}
                             </div>
                         </div>

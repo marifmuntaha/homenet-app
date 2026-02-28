@@ -2,7 +2,10 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
+import { Button, Alert } from 'reactstrap'
 import api from '../lib/axios'
+import RSelect from './RSelect'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 interface Device {
     id: number
@@ -38,13 +41,14 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
             <div style={{
-                background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px',
-                padding: '10px 14px', fontSize: '0.8rem', boxShadow: '0 4px 12px rgba(0,0,0,.2)'
+                background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px',
+                padding: '10px 14px', fontSize: '0.8rem', boxShadow: 'var(--shadow-lg)',
             }}>
                 <p style={{ color: 'var(--text-muted)', marginBottom: 6 }}>{label}</p>
                 {payload.map((p: any) => (
                     <p key={p.name} style={{ color: p.color, margin: '2px 0' }}>
-                        {p.name === 'download' ? '⬇ Download' : '⬆ Upload'}: <strong>{formatBps(p.value)}</strong>
+                        <FontAwesomeIcon icon={['fas', p.name === 'download' ? 'arrow-down' : 'arrow-up']} />{' '}
+                        {p.name === 'download' ? 'Download' : 'Upload'}: <strong>{formatBps(p.value)}</strong>
                     </p>
                 ))}
             </div>
@@ -65,13 +69,11 @@ export default function MikrotikTrafficChart() {
     const [isPolling, setIsPolling] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-    // Store previous bytes for bps calculation
     const prevRef = useRef<RawTraffic | null>(null)
 
     // Load devices on mount
     useEffect(() => {
         api.get<any>('/devices').then(res => {
-            // Handle paginated response: { data: { data: [...] } }
             const raw = res.data?.data
             const devs: Device[] = Array.isArray(raw) ? raw : (raw?.data ?? [])
             setDevices(devs)
@@ -88,14 +90,31 @@ export default function MikrotikTrafficChart() {
         prevRef.current = null
         api.get<any>(`/devices/${selectedDevice}/interfaces`).then(res => {
             const ifaces: Interface[] = res.data?.data ?? []
-            // Show all interfaces, prefer running ones first
             const sorted = [...ifaces].sort((a, b) => (b.running ? 1 : 0) - (a.running ? 1 : 0))
             setInterfaces(sorted)
             if (sorted.length > 0) setSelectedInterface(sorted[0].name)
         }).catch(() => setInterfaces([]))
     }, [selectedDevice])
 
-    // Fetch one traffic snapshot and compute bps from delta
+    // Build RSelect options
+    const deviceOptions = devices.map(d => ({ value: String(d.id), label: d.name }))
+    const interfaceOptions = interfaces.map(i => ({
+        value: i.name,
+        label: `${i.name} (${i.type})`,
+        isRunning: i.running,
+    }))
+
+    // Custom format for interface option (show running status dot)
+    const formatInterfaceOption = (opt: any) => (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{
+                width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+                background: opt.isRunning ? 'var(--success)' : 'var(--danger)',
+            }} />
+            {opt.label}
+        </span>
+    )
+
     const fetchTraffic = useCallback(async () => {
         if (!selectedDevice || !selectedInterface) return
         try {
@@ -124,17 +143,14 @@ export default function MikrotikTrafficChart() {
 
             prevRef.current = raw
 
-            // Only add point if we have a prev reference (skip FIrst point since we have no delta)
             if (downloadBps > 0 || uploadBps > 0 || (prevRef.current && data.length > 0)) {
                 const now = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
                 setData(prev => {
-                    // Skip the very first measurement (no delta available)
                     if (prev.length === 0 && downloadBps === 0 && uploadBps === 0) return prev
                     const next = [...prev, { time: now, download: downloadBps, upload: uploadBps }]
                     return next.length > MAX_POINTS ? next.slice(-MAX_POINTS) : next
                 })
             }
-
             setError(null)
         } catch (err: any) {
             setError(`Gagal mengambil data traffic: ${err.message}`)
@@ -146,7 +162,7 @@ export default function MikrotikTrafficChart() {
         prevRef.current = null
 
         if (isPolling && selectedInterface) {
-            fetchTraffic() // Initial fetch to set prevRef
+            fetchTraffic()
             intervalRef.current = setInterval(fetchTraffic, POLL_INTERVAL)
         }
 
@@ -158,79 +174,101 @@ export default function MikrotikTrafficChart() {
 
     return (
         <div className="card" style={{ marginTop: 24 }}>
-            <div className="card-header" style={{ flexWrap: 'wrap', gap: 12 }}>
+            <div className="card-header" style={{ flexWrap: 'wrap', gap: 12, alignItems: 'flex-start' }}>
                 <div>
-                    <h2 className="card-title">📊 Monitor Traffic Realtime</h2>
+                    <h2 className="card-title">
+                        <FontAwesomeIcon icon={['fas', 'chart-area']} style={{ marginRight: 8, color: 'var(--accent)' }} />
+                        Monitor Traffic Realtime
+                    </h2>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
                         Data diambil dari Mikrotik · update setiap 2 detik
                     </p>
                 </div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginLeft: 'auto' }}>
                     {/* Device Selector */}
-                    <select
-                        value={selectedDevice}
-                        onChange={e => { setSelectedDevice(e.target.value); setIsPolling(false); setData([]); prevRef.current = null }}
-                        className="input"
-                        style={{ minWidth: 140, height: 36, padding: '0 10px', fontSize: '0.85rem' }}
-                        disabled={isPolling}
-                    >
-                        {devices.length === 0 && <option>Memuat...</option>}
-                        {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                    </select>
+                    <div style={{ minWidth: 160 }}>
+                        <RSelect
+                            options={deviceOptions}
+                            value={deviceOptions.find(o => o.value === selectedDevice) ?? null}
+                            onChange={(opt) => {
+                                if (opt) {
+                                    setSelectedDevice(opt.value as string)
+                                    setIsPolling(false)
+                                    setData([])
+                                    prevRef.current = null
+                                }
+                            }}
+                            isDisabled={isPolling}
+                            placeholder="Pilih device..."
+                        />
+                    </div>
 
                     {/* Interface Selector */}
-                    <select
-                        value={selectedInterface}
-                        onChange={e => { setSelectedInterface(e.target.value); setData([]); prevRef.current = null }}
-                        className="input"
-                        style={{ minWidth: 150, height: 36, padding: '0 10px', fontSize: '0.85rem' }}
-                        disabled={isPolling || interfaces.length === 0}
-                    >
-                        {interfaces.length === 0
-                            ? <option>Memuat interface...</option>
-                            : interfaces.map(i => (
-                                <option key={i.name} value={i.name}>
-                                    {i.running ? '🟢' : '🔴'} {i.name} ({i.type})
-                                </option>
-                            ))
-                        }
-                    </select>
+                    <div style={{ minWidth: 190 }}>
+                        <RSelect
+                            options={interfaceOptions}
+                            value={interfaceOptions.find(o => o.value === selectedInterface) ?? null}
+                            onChange={(opt: any) => {
+                                if (opt) {
+                                    setSelectedInterface(opt.value)
+                                    setData([])
+                                    prevRef.current = null
+                                }
+                            }}
+                            isDisabled={isPolling || interfaces.length === 0}
+                            placeholder={interfaces.length === 0 ? 'Memuat...' : 'Pilih interface...'}
+                            formatOptionLabel={formatInterfaceOption}
+                        />
+                    </div>
 
-                    {/* Start/Stop */}
-                    <button
-                        className={`btn ${isPolling ? 'btn-danger' : 'btn-primary'} btn-sm`}
-                        onClick={() => { setIsPolling(p => !p); if (isPolling) { setData([]); prevRef.current = null } }}
+                    {/* Start/Stop Button */}
+                    <Button
+                        color={isPolling ? 'danger' : 'primary'}
+                        size="sm"
+                        onClick={() => {
+                            setIsPolling(p => !p)
+                            if (isPolling) { setData([]); prevRef.current = null }
+                        }}
                         disabled={!selectedInterface}
-                        style={{ height: 36, minWidth: 120 }}
+                        style={{ height: 42, minWidth: 140, display: 'flex', alignItems: 'center', gap: 8 }}
                     >
-                        {isPolling ? '⏹ Stop' : '▶ Mulai Monitor'}
-                    </button>
+                        <FontAwesomeIcon icon={['fas', isPolling ? 'stop' : 'play']} />
+                        {isPolling ? 'Stop' : 'Mulai Monitor'}
+                    </Button>
                 </div>
             </div>
 
             {error && (
-                <div style={{ padding: '8px 16px', background: 'rgba(239,68,68,0.1)', color: 'var(--danger)', fontSize: '0.8rem', borderTop: '1px solid var(--border)' }}>
-                    ⚠️ {error}
-                </div>
+                <Alert color="danger" className="m-3 mb-0 d-flex align-items-center gap-2" style={{ fontSize: '0.8rem' }}>
+                    <FontAwesomeIcon icon={['fas', 'triangle-exclamation']} />
+                    {error}
+                </Alert>
             )}
 
             {/* Live Stats */}
             {isPolling && (
-                <div style={{ display: 'flex', gap: 24, padding: '12px 16px', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: 24, padding: '12px 20px', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
                     <div>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 2 }}>⬇ Download</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 2 }}>
+                            <FontAwesomeIcon icon={['fas', 'arrow-down']} style={{ color: 'var(--success)', marginRight: 4 }} />
+                            Download
+                        </div>
                         <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#22c55e', fontVariantNumeric: 'tabular-nums' }}>
                             {formatBps(currentDownload)}
                         </div>
                     </div>
                     <div>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 2 }}>⬆ Upload</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 2 }}>
+                            <FontAwesomeIcon icon={['fas', 'arrow-up']} style={{ color: '#f59e0b', marginRight: 4 }} />
+                            Upload
+                        </div>
                         <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#f59e0b', fontVariantNumeric: 'tabular-nums' }}>
                             {formatBps(currentUpload)}
                         </div>
                     </div>
                     <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
                         Live · {selectedInterface}
                     </div>
                 </div>
@@ -239,12 +277,12 @@ export default function MikrotikTrafficChart() {
             {/* Chart */}
             <div style={{ padding: '16px', height: 300 }}>
                 {data.length < 2 ? (
-                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', flexDirection: 'column', gap: 8 }}>
-                        <span style={{ fontSize: '2.5rem' }}>📈</span>
+                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', flexDirection: 'column', gap: 10 }}>
+                        <FontAwesomeIcon icon={['fas', 'chart-area']} style={{ fontSize: '2.5rem', opacity: 0.3 }} />
                         <p style={{ margin: 0, fontSize: '0.85rem' }}>
                             {isPolling
                                 ? 'Mengumpulkan data, mohon tunggu...'
-                                : 'Pilih perangkat & interface, lalu klik "▶ Mulai Monitor"'
+                                : 'Pilih perangkat & interface, lalu klik "Mulai Monitor"'
                             }
                         </p>
                     </div>
@@ -274,7 +312,12 @@ export default function MikrotikTrafficChart() {
                             />
                             <Tooltip content={<CustomTooltip />} />
                             <Legend
-                                formatter={v => v === 'download' ? '⬇ Download' : '⬆ Upload'}
+                                formatter={v => (
+                                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                                        <FontAwesomeIcon icon={['fas', v === 'download' ? 'arrow-down' : 'arrow-up']} style={{ marginRight: 4 }} />
+                                        {v === 'download' ? 'Download' : 'Upload'}
+                                    </span>
+                                )}
                             />
                             <Area
                                 type="monotone"

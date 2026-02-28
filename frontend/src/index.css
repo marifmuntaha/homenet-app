@@ -32,6 +32,410 @@
   --transition: 0.2s ease;
   --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 48px rgba(0, 0, 0, 0.6);
+
+  /* Bootstrap overrides */
+  --bs-body-bg: var(--bg-primary);
+  --bs-body-color: var(--text-primary);
+  --bs-border-color: var(--border);
+  --bs-primary: var(--accent);
+  --bs-primary-rgb: 99, 102, 241;
+  --bs-success-rgb: 34, 197, 94;
+  --bs-danger-rgb: 239, 68, 68;
+  --bs-warning-rgb: 245, 158, 11;
+}
+
+/* ============================
+   BOOTSTRAP DARK THEME OVERRIDES
+============================= */
+
+/* Form controls */
+.form-control,
+.form-select {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
+  font-family: 'Inter', sans-serif;
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--accent) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 0 0 3px var(--accent-light) !important;
+}
+
+.form-control::placeholder {
+  color: var(--text-muted) !important;
+}
+
+.form-label {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.form-control.is-invalid,
+.form-select.is-invalid {
+  border-color: var(--danger) !important;
+}
+
+.invalid-feedback {
+  color: var(--danger);
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: white !important;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--accent-hover) !important;
+  border-color: var(--accent-hover) !important;
+  box-shadow: 0 4px 16px var(--accent-glow) !important;
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background-color: var(--danger-light) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  color: var(--danger) !important;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: var(--danger) !important;
+  border-color: var(--danger) !important;
+  color: white !important;
+}
+
+.btn-secondary {
+  background-color: var(--bg-hover) !important;
+  border-color: var(--border) !important;
+  color: var(--text-secondary) !important;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--border) !important;
+  color: var(--text-primary) !important;
+}
+
+.btn-outline-secondary {
+  border-color: var(--border) !important;
+  color: var(--text-secondary) !important;
+}
+
+.btn-outline-secondary:hover {
+  background-color: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-light) !important;
+}
+
+/* Modals */
+.modal-content {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+.modal-header {
+  border-bottom-color: var(--border) !important;
+  padding: 20px 24px !important;
+}
+
+.modal-title {
+  color: var(--text-primary) !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+}
+
+.modal-body {
+  padding: 24px !important;
+  color: var(--text-primary) !important;
+}
+
+.modal-footer {
+  border-top-color: var(--border) !important;
+  padding: 16px 24px !important;
+}
+
+.modal-backdrop.show {
+  backdrop-filter: blur(4px);
+}
+
+.btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%) !important;
+  opacity: 0.5 !important;
+}
+
+.btn-close:hover {
+  opacity: 1 !important;
+}
+
+/* ============================
+   REACTSTRAP DARK THEME OVERRIDES
+============================= */
+
+/* Buttons -- map to our dark theme colors */
+.btn-primary {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: #fff !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover) !important;
+  border-color: var(--accent-hover) !important;
+}
+
+.btn-primary:disabled {
+  background: var(--accent) !important;
+  opacity: 0.6 !important;
+}
+
+.btn-secondary {
+  background: transparent !important;
+  border-color: var(--border-light) !important;
+  color: var(--text-secondary) !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bg-hover) !important;
+  border-color: var(--border-light) !important;
+  color: var(--text-primary) !important;
+}
+
+.btn-danger {
+  background: var(--danger) !important;
+  border-color: var(--danger) !important;
+  color: #fff !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+}
+
+.btn-success {
+  background: var(--success) !important;
+  border-color: var(--success) !important;
+  color: #fff !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* Alert dark overrides */
+.alert {
+  border-radius: var(--radius-sm) !important;
+  font-size: 14px !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.alert-danger {
+  background: var(--danger-light) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  color: #fca5a5 !important;
+}
+
+.alert-success {
+  background: var(--success-light) !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+  color: #86efac !important;
+}
+
+.alert-warning {
+  background: var(--warning-light) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  color: #fcd34d !important;
+}
+
+.alert-info {
+  background: rgba(56, 189, 248, 0.1) !important;
+  border-color: rgba(56, 189, 248, 0.25) !important;
+  color: #7dd3fc !important;
+}
+
+/* Invalid feedback */
+.invalid-feedback {
+  font-size: 12px !important;
+  color: #fca5a5 !important;
+}
+
+/* Spinner */
+.spinner-border-sm {
+  width: 0.9rem !important;
+  height: 0.9rem !important;
+}
+
+/* Bootstrap Pagination Dark Theme */
+.page-link {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border) !important;
+  color: var(--text-secondary) !important;
+  border-radius: 6px !important;
+  padding: 5px 11px !important;
+  font-size: 13px !important;
+  transition: all 0.15s ease !important;
+}
+
+.page-link:hover {
+  background-color: var(--bg-hover) !important;
+  border-color: var(--border-light) !important;
+  color: var(--text-primary) !important;
+}
+
+.page-item.active .page-link {
+  background-color: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: #fff !important;
+}
+
+.page-item.disabled .page-link {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border) !important;
+  color: var(--text-muted) !important;
+  opacity: 0.5 !important;
+}
+
+/* Table */
+.table {
+  color: var(--text-secondary) !important;
+  border-color: var(--border) !important;
+}
+
+.table>thead>tr>th {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-muted) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.8px !important;
+  border-color: var(--border) !important;
+  padding: 12px 16px !important;
+}
+
+.table>tbody>tr>td {
+  border-color: var(--border) !important;
+  padding: 14px 16px !important;
+  font-size: 14px !important;
+  vertical-align: middle !important;
+}
+
+.table-hover>tbody>tr:hover>* {
+  background-color: var(--bg-hover) !important;
+  color: var(--text-secondary) !important;
+}
+
+/* Cards */
+.card {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border) !important;
+  border-radius: var(--radius) !important;
+}
+
+.card-header {
+  background-color: var(--bg-card) !important;
+  border-bottom-color: var(--border) !important;
+  color: var(--text-primary) !important;
+}
+
+.card-body {
+  color: var(--text-primary) !important;
+}
+
+/* Badges */
+.badge {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 4px 10px !important;
+  border-radius: 20px !important;
+}
+
+/* Alerts */
+.alert-danger {
+  background-color: var(--danger-light) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  color: var(--danger) !important;
+}
+
+.alert-success {
+  background-color: var(--success-light) !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+  color: var(--success) !important;
+}
+
+.alert-warning {
+  background-color: var(--warning-light) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  color: var(--warning) !important;
+}
+
+/* Input group */
+.input-group-text {
+  background-color: var(--bg-hover) !important;
+  border-color: var(--border) !important;
+  color: var(--text-muted) !important;
+}
+
+/* Dropdown */
+.dropdown-menu {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border) !important;
+}
+
+.dropdown-item {
+  color: var(--text-secondary) !important;
+}
+
+.dropdown-item:hover {
+  background-color: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Pagination (Bootstrap) */
+.page-item .page-link {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border) !important;
+  color: var(--text-secondary) !important;
+}
+
+.page-item.active .page-link {
+  background-color: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: white !important;
+}
+
+.page-item.disabled .page-link {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border) !important;
+  color: var(--text-muted) !important;
+  opacity: 0.4;
+}
+
+.page-item .page-link:hover {
+  background-color: var(--bg-hover) !important;
+  border-color: var(--border-light) !important;
+  color: var(--text-primary) !important;
+}
+
+/* FontAwesome icon sizing helper */
+.fa-icon-nav {
+  width: 20px;
+  text-align: center;
+  font-size: 15px;
+}
+
+.fa-icon-stat {
+  font-size: 20px;
+}
+
+.fa-icon-action {
+  font-size: 13px;
 }
 
 * {
@@ -671,8 +1075,9 @@ tbody tr:hover {
   inset: 0;
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
-  z-index: 200;
-  display: flex;
+  z-index: 1060;
+  /* Higher than Bootstrap's modal z-index (1055) */
+  display: flex !important;
   align-items: center;
   justify-content: center;
   padding: 20px;
@@ -689,16 +1094,26 @@ tbody tr:hover {
   }
 }
 
-.modal {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  width: 100%;
+/* Override Bootstrap's .modal { display: none } */
+.modal-overlay .modal {
+  display: block !important;
+  position: relative !important;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  width: 100% !important;
   max-width: 520px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: var(--shadow-lg);
   animation: modalIn 0.3s ease;
+  /* Reset Bootstrap overrides */
+  transform: none !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  pointer-events: auto !important;
 }
 
 @keyframes modalIn {
@@ -713,18 +1128,19 @@ tbody tr:hover {
   }
 }
 
-.modal-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.modal-overlay .modal-header {
+  padding: 20px 24px !important;
+  border-bottom: 1px solid var(--border) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: transparent !important;
 }
 
-.modal-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--text-primary);
+.modal-overlay .modal-title {
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  color: var(--text-primary) !important;
 }
 
 .modal-close {
@@ -744,16 +1160,19 @@ tbody tr:hover {
   color: var(--text-primary);
 }
 
-.modal-body {
-  padding: 24px;
+.modal-overlay .modal-body {
+  padding: 24px !important;
+  color: var(--text-primary) !important;
+  background: transparent !important;
 }
 
-.modal-footer {
-  padding: 16px 24px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
+.modal-overlay .modal-footer {
+  padding: 16px 24px !important;
+  border-top: 1px solid var(--border) !important;
+  display: flex !important;
+  gap: 12px !important;
+  justify-content: flex-end !important;
+  background: transparent !important;
 }
 
 /* ===============================

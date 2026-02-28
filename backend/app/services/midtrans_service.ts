@@ -7,7 +7,7 @@ import CustomerService from '#services/customer_service'
 
 export default class MidtransService {
     private static snap = new midtransClient.Snap({
-        isProduction: false,
+        isProduction: env.get('MIDTRANS_IS_PRODUCTION'),
         serverKey: env.get('MIDTRANS_SERVER_KEY'),
         clientKey: env.get('MIDTRANS_CLIENT_KEY'),
     })

@@ -45,4 +45,5 @@ export default await Env.create(new URL('../', import.meta.url), {
   */
   MIDTRANS_SERVER_KEY: Env.schema.string(),
   MIDTRANS_CLIENT_KEY: Env.schema.string(),
+  MIDTRANS_IS_PRODUCTION: Env.schema.boolean(),
 })

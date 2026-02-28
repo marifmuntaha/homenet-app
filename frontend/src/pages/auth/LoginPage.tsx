@@ -6,6 +6,7 @@ import { useState } from 'react'
 import api from '../../lib/axios'
 import { useAuth } from '../../contexts/AuthContext'
 import type { AuthResponse } from '../../types'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 const schema = z.object({
     email: z.string().email('Email tidak valid'),
@@ -45,14 +46,16 @@ export default function LoginPage() {
         <div className="auth-page">
             <div className="auth-card">
                 <div className="auth-header">
-                    <div className="auth-logo">🏠</div>
+                    <div className="auth-logo">
+                        <FontAwesomeIcon icon={['fas', 'wifi']} />
+                    </div>
                     <h2>Selamat Datang Kembali</h2>
                     <p>Masuk ke akun Homenet Anda</p>
                 </div>
 
                 {error && (
                     <div className="alert alert-error">
-                        <span>⚠️</span> {error}
+                        <FontAwesomeIcon icon={['fas', 'triangle-exclamation']} /> {error}
                     </div>
                 )}
 
@@ -65,7 +68,7 @@ export default function LoginPage() {
                             placeholder="nama@email.com"
                             type="email"
                         />
-                        {errors.email && <p className="form-error">⚠ {errors.email.message}</p>}
+                        {errors.email && <p className="form-error"><FontAwesomeIcon icon={['fas', 'triangle-exclamation']} /> {errors.email.message}</p>}
                     </div>
 
                     <div className="form-group">
@@ -76,7 +79,7 @@ export default function LoginPage() {
                             placeholder="••••••••"
                             type="password"
                         />
-                        {errors.password && <p className="form-error">⚠ {errors.password.message}</p>}
+                        {errors.password && <p className="form-error"><FontAwesomeIcon icon={['fas', 'triangle-exclamation']} /> {errors.password.message}</p>}
                     </div>
 
                     <div style={{ textAlign: 'right', marginBottom: '20px' }}>

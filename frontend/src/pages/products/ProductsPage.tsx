@@ -3,6 +3,7 @@ import Layout from '../../components/Layout'
 import api from '../../lib/axios'
 import type { Product, PaginatedResponse, ProductSyncResult } from '../../types'
 import ProductModal from './ProductModal'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 export default function ProductsPage() {
     const [products, setProducts] = useState<Product[]>([])
@@ -86,7 +87,9 @@ export default function ProductsPage() {
                     <h2 className="card-title">Daftar Produk & Profil Internet</h2>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                         <div className="search-box">
-                            <span className="search-icon">🔍</span>
+                            <span className="search-icon">
+                                <FontAwesomeIcon icon={['fas', 'magnifying-glass']} />
+                            </span>
                             <input
                                 className="form-input"
                                 placeholder="Cari nama produk..."
@@ -96,7 +99,7 @@ export default function ProductsPage() {
                             />
                         </div>
                         <button className="btn btn-primary" onClick={openCreate}>
-                            + Tambah Produk
+                            <FontAwesomeIcon icon={['fas', 'plus']} /> Tambah Produk
                         </button>
                     </div>
                 </div>
@@ -109,7 +112,9 @@ export default function ProductsPage() {
                         </div>
                     ) : products.length === 0 ? (
                         <div className="empty-state">
-                            <div className="empty-state-icon">📦</div>
+                            <div className="empty-state-icon">
+                                <FontAwesomeIcon icon={['fas', 'box']} />
+                            </div>
                             <h3>Tidak ada produk</h3>
                             <p>{search ? `Tidak ditemukan "${search}"` : 'Belum ada produk internet yang dibuat'}</p>
                         </div>
@@ -138,10 +143,10 @@ export default function ProductsPage() {
                                                         width: 34, height: 34, borderRadius: '8px',
                                                         background: 'linear-gradient(135deg, #10b981, #059669)',
                                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        fontSize: 16, flexShrink: 0,
+                                                        fontSize: 14, flexShrink: 0, color: 'white',
                                                     }}
                                                 >
-                                                    📦
+                                                    <FontAwesomeIcon icon={['fas', 'box']} />
                                                 </div>
                                                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{product.name}</span>
                                             </div>
@@ -149,10 +154,10 @@ export default function ProductsPage() {
                                         <td>
                                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                                 <span className="badge badge-verified" style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#0ea5e9' }}>
-                                                    ⬇️ {product.download_speed} Mbps
+                                                    <FontAwesomeIcon icon={['fas', 'arrow-down']} /> {product.download_speed} Mbps
                                                 </span>
                                                 <span className="badge badge-verified" style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#0ea5e9' }}>
-                                                    ⬆️ {product.upload_speed} Mbps
+                                                    <FontAwesomeIcon icon={['fas', 'arrow-up']} /> {product.upload_speed} Mbps
                                                 </span>
                                             </div>
                                         </td>
@@ -168,16 +173,16 @@ export default function ProductsPage() {
                                                 disabled={syncingId === product.id}
                                                 title="Paksa sinkronisasi PPP Profile ke semua router"
                                             >
-                                                {syncingId === product.id ? <span className="spinner" style={{ width: 14, height: 14 }} /> : '🔄'} Force Sync
+                                                {syncingId === product.id ? <span className="spinner" style={{ width: 14, height: 14 }} /> : <FontAwesomeIcon icon={['fas', 'arrows-rotate']} />} Force Sync
                                             </button>
                                         </td>
                                         <td>
                                             <div className="table-actions">
                                                 <button className="btn btn-ghost btn-sm" onClick={() => openEdit(product)}>
-                                                    ✏️
+                                                    <FontAwesomeIcon icon={['fas', 'pen-to-square']} />
                                                 </button>
                                                 <button className="btn btn-danger btn-sm" onClick={() => setDeleteTarget(product)}>
-                                                    🗑️
+                                                    <FontAwesomeIcon icon={['fas', 'trash']} />
                                                 </button>
                                             </div>
                                         </td>
@@ -217,8 +222,10 @@ export default function ProductsPage() {
             {deleteTarget && (
                 <div className="confirm-overlay">
                     <div className="confirm-box">
-                        <div className="confirm-icon">🗑️</div>
-                        <h3>Hapus Produk & Profil Mikrotik</h3>
+                        <div className="confirm-icon">
+                            <FontAwesomeIcon icon={['fas', 'triangle-exclamation']} style={{ color: 'var(--danger)' }} />
+                        </div>
+                        <h3>Hapus Produk &amp; Profil Mikrotik</h3>
                         <p>
                             Anda yakin ingin menghapus <strong style={{ color: 'var(--text-primary)' }}>{deleteTarget.name}</strong>?
                             Ini juga akan <strong>menghapus PPP Profile</strong> di semua router Mikrotik.

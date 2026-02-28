@@ -3,19 +3,24 @@ import User from '#models/user'
 
 export default class extends BaseSeeder {
     async run() {
-        await User.createMany([
+        // Create Administrator
+        await User.updateOrCreate(
+            { email: 'admin@homenet.id' },
             {
                 name: 'Administrator',
-                email: 'admin@homenet.id',
                 password: 'katasandi1234',
                 role: User.ROLE_ADMINISTRATOR,
-            },
+            }
+        )
+
+        // Create Default Customer
+        await User.updateOrCreate(
+            { email: 'customer@homenet.id' },
             {
                 name: 'Customer',
-                email: 'customer@homenet.id',
                 password: 'katasandi1234',
                 role: User.ROLE_CUSTOMER,
-            },
-        ])
+            }
+        )
     }
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import api from '../../lib/axios'
 import Layout from '../../components/Layout'
 import type { Invoice } from '../../types'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 interface DashboardData {
     customer: {
@@ -116,7 +117,7 @@ export default function CustomerDashboardPage() {
         <Layout title="Dashboard Saya">
             {isIsolated && (
                 <div className="alert alert-error" style={{ marginBottom: '24px', borderLeft: '4px solid var(--danger)' }}>
-                    <span style={{ fontSize: '20px' }}>⚠️</span>
+                    <FontAwesomeIcon icon={['fas', 'triangle-exclamation']} style={{ fontSize: '20px' }} />
                     <div>
                         <strong style={{ display: 'block' }}>Layanan Terisolasi</strong>
                         <p style={{ margin: 0, fontSize: '0.875rem' }}>Akses internet Anda saat ini terbatas. Silakan selesaikan pembayaran tagihan untuk mengaktifkan kembali layanan.</p>
@@ -182,7 +183,7 @@ export default function CustomerDashboardPage() {
                                     style={{ width: '100%', padding: '12px', fontWeight: 600 }}
                                     onClick={() => handlePayOnline(latestUnpaid)}
                                 >
-                                    💳 Bayar Sekarang (Online)
+                                    <FontAwesomeIcon icon={['fas', 'credit-card']} /> Bayar Sekarang (Online)
                                 </button>
                                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '10px' }}>
                                     Metode: Virtual Account, E-Wallet, Kartu Kredit
@@ -190,7 +191,7 @@ export default function CustomerDashboardPage() {
                             </div>
                         ) : (
                             <div style={{ textAlign: 'center', padding: '20px', background: 'var(--success-light)', borderRadius: '12px', color: 'var(--success)' }}>
-                                <span style={{ fontSize: '24px', display: 'block', marginBottom: '8px' }}>✅</span>
+                                <FontAwesomeIcon icon={['fas', 'circle-check']} style={{ fontSize: '24px', display: 'block', marginBottom: '8px' }} />
                                 <strong>Semua tagihan sudah lunas</strong>
                             </div>
                         )}

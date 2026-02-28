@@ -3,6 +3,7 @@ import Layout from '../../components/Layout'
 import api from '../../lib/axios'
 import type { Device, DeviceStatus, PaginatedResponse } from '../../types'
 import DeviceModal from './DeviceModal'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 const STATUS_REFRESH_INTERVAL = 30_000 // 30 detik
 
@@ -116,21 +117,27 @@ export default function DevicesPage() {
             {/* Stats */}
             <div className="stats-grid">
                 <div className="stat-card">
-                    <div className="stat-icon stat-icon-purple">🖥️</div>
+                    <div className="stat-icon stat-icon-purple">
+                        <FontAwesomeIcon icon={['fas', 'server']} className="fa-icon-stat" />
+                    </div>
                     <div className="stat-info">
                         <p>Total Device</p>
                         <h3>{meta.total}</h3>
                     </div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon stat-icon-green">🟢</div>
+                    <div className="stat-icon stat-icon-green">
+                        <FontAwesomeIcon icon={['fas', 'circle-check']} className="fa-icon-stat" />
+                    </div>
                     <div className="stat-info">
                         <p>Online</p>
                         <h3>{onlineCount}</h3>
                     </div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon" style={{ background: 'rgba(239,68,68,0.15)' }}>🔴</div>
+                    <div className="stat-icon" style={{ background: 'rgba(239,68,68,0.15)' }}>
+                        <FontAwesomeIcon icon={['fas', 'circle-xmark']} className="fa-icon-stat" style={{ color: 'var(--danger)' }} />
+                    </div>
                     <div className="stat-info">
                         <p>Offline</p>
                         <h3>{offlineCount}</h3>
@@ -144,7 +151,9 @@ export default function DevicesPage() {
                     <h2 className="card-title">Daftar Device Mikrotik</h2>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                         <div className="search-box">
-                            <span className="search-icon">🔍</span>
+                            <span className="search-icon">
+                                <FontAwesomeIcon icon={['fas', 'magnifying-glass']} />
+                            </span>
                             <input
                                 className="form-input"
                                 placeholder="Cari nama, host, user..."
@@ -158,10 +167,10 @@ export default function DevicesPage() {
                             onClick={() => fetchAllStatus()}
                             title="Refresh semua status"
                         >
-                            🔄 Refresh Status
+                            <FontAwesomeIcon icon={['fas', 'arrows-rotate']} /> Refresh Status
                         </button>
                         <button className="btn btn-primary" onClick={openCreate}>
-                            + Tambah Device
+                            <FontAwesomeIcon icon={['fas', 'plus']} /> Tambah Device
                         </button>
                     </div>
                 </div>
@@ -174,7 +183,9 @@ export default function DevicesPage() {
                         </div>
                     ) : devices.length === 0 ? (
                         <div className="empty-state">
-                            <div className="empty-state-icon">🖥️</div>
+                            <div className="empty-state-icon">
+                                <FontAwesomeIcon icon={['fas', 'server']} />
+                            </div>
                             <h3>Tidak ada device</h3>
                             <p>{search ? `Tidak ditemukan hasil untuk "${search}"` : 'Belum ada device yang terdaftar'}</p>
                         </div>
@@ -207,10 +218,11 @@ export default function DevicesPage() {
                                                             width: 34, height: 34, borderRadius: '8px',
                                                             background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                                                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                            fontSize: 16, flexShrink: 0,
+                                                            fontSize: 14, flexShrink: 0,
+                                                            color: 'white',
                                                         }}
                                                     >
-                                                        🖥️
+                                                        <FontAwesomeIcon icon={['fas', 'server']} />
                                                     </div>
                                                     <div>
                                                         <span style={{ fontWeight: 500, color: 'var(--text-primary)', display: 'block' }}>{device.name}</span>
@@ -238,10 +250,10 @@ export default function DevicesPage() {
                                             <td>
                                                 <div className="table-actions">
                                                     <button className="btn btn-ghost btn-sm" onClick={() => openEdit(device)}>
-                                                        ✏️ Edit
+                                                        <FontAwesomeIcon icon={['fas', 'pen-to-square']} /> Edit
                                                     </button>
                                                     <button className="btn btn-danger btn-sm" onClick={() => setDeleteTarget(device)}>
-                                                        🗑️
+                                                        <FontAwesomeIcon icon={['fas', 'trash']} />
                                                     </button>
                                                 </div>
                                             </td>
@@ -285,7 +297,9 @@ export default function DevicesPage() {
             {deleteTarget && (
                 <div className="confirm-overlay">
                     <div className="confirm-box">
-                        <div className="confirm-icon">🗑️</div>
+                        <div className="confirm-icon">
+                            <FontAwesomeIcon icon={['fas', 'triangle-exclamation']} style={{ color: 'var(--danger)' }} />
+                        </div>
                         <h3>Hapus Device</h3>
                         <p>
                             Anda yakin ingin menghapus <strong style={{ color: 'var(--text-primary)' }}>{deleteTarget.name}</strong>?
@@ -294,7 +308,7 @@ export default function DevicesPage() {
                         <div className="confirm-actions">
                             <button className="btn btn-ghost" onClick={() => setDeleteTarget(null)}>Batal</button>
                             <button className="btn btn-danger" onClick={handleDelete} disabled={isDeleting}>
-                                {isDeleting ? <><span className="spinner" /> Menghapus...</> : 'Ya, Hapus'}
+                                {isDeleting ? <><span className="spinner" /> Menghapus...</> : <><FontAwesomeIcon icon={['fas', 'trash']} /> Ya, Hapus</>}
                             </button>
                         </div>
                     </div>
@@ -362,7 +376,7 @@ function StatusBadge({ status, onRefresh }: StatusBadgeProps) {
                     onClick={onRefresh}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--text-muted)', padding: 0 }}
                     title="Refresh status"
-                >🔄</button>
+                ><FontAwesomeIcon icon={['fas', 'arrows-rotate']} /></button>
             </div>
             {status.error && (
                 <span style={{ fontSize: '11px', color: '#dc2626', paddingLeft: 2 }} title={status.error}>

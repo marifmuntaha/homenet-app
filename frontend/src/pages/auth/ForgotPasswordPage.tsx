@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useState } from 'react'
 import api from '../../lib/axios'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 const forgotSchema = z.object({
     email: z.string().email('Email tidak valid'),
@@ -70,7 +71,9 @@ export default function ForgotPasswordPage() {
         <div className="auth-page">
             <div className="auth-card">
                 <div className="auth-header">
-                    <div className="auth-logo">🔑</div>
+                    <div className="auth-logo">
+                        <FontAwesomeIcon icon={['fas', 'key']} />
+                    </div>
                     {mode === 'forgot' ? (
                         <>
                             <h2>Lupa Password</h2>
@@ -84,10 +87,10 @@ export default function ForgotPasswordPage() {
                     )}
                 </div>
 
-                {error && <div className="alert alert-error"><span>⚠️</span> {error}</div>}
+                {error && <div className="alert alert-error"><FontAwesomeIcon icon={['fas', 'triangle-exclamation']} /> {error}</div>}
                 {success && (
                     <div className="alert alert-success">
-                        <span>✅</span> {success}
+                        <FontAwesomeIcon icon={['fas', 'circle-check']} /> {success}
                     </div>
                 )}
 
@@ -96,7 +99,7 @@ export default function ForgotPasswordPage() {
                         className="alert"
                         style={{ background: 'var(--warning-light)', color: 'var(--warning)', border: '1px solid rgba(245,158,11,0.3)', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}
                     >
-                        <span style={{ fontWeight: 600 }}>🧪 Dev Mode — Token Reset:</span>
+                        <span style={{ fontWeight: 600 }}><FontAwesomeIcon icon={['fas', 'flask']} /> Dev Mode — Token Reset:</span>
                         <code style={{ fontSize: '12px', wordBreak: 'break-all' }}>{devToken}</code>
                         <button
                             className="btn btn-sm"
@@ -121,7 +124,7 @@ export default function ForgotPasswordPage() {
                                 type="email"
                             />
                             {forgotForm.formState.errors.email && (
-                                <p className="form-error">⚠ {forgotForm.formState.errors.email.message}</p>
+                                <p className="form-error"><FontAwesomeIcon icon={['fas', 'triangle-exclamation']} /> {forgotForm.formState.errors.email.message}</p>
                             )}
                         </div>
 
@@ -140,7 +143,7 @@ export default function ForgotPasswordPage() {
                                 type="email"
                             />
                             {resetForm.formState.errors.email && (
-                                <p className="form-error">⚠ {resetForm.formState.errors.email.message}</p>
+                                <p className="form-error"><FontAwesomeIcon icon={['fas', 'triangle-exclamation']} /> {resetForm.formState.errors.email.message}</p>
                             )}
                         </div>
 
@@ -152,7 +155,7 @@ export default function ForgotPasswordPage() {
                                 placeholder="Paste token dari email"
                             />
                             {resetForm.formState.errors.token && (
-                                <p className="form-error">⚠ {resetForm.formState.errors.token.message}</p>
+                                <p className="form-error"><FontAwesomeIcon icon={['fas', 'triangle-exclamation']} /> {resetForm.formState.errors.token.message}</p>
                             )}
                         </div>
 
@@ -166,7 +169,7 @@ export default function ForgotPasswordPage() {
                                     type="password"
                                 />
                                 {resetForm.formState.errors.password && (
-                                    <p className="form-error">⚠ {resetForm.formState.errors.password.message}</p>
+                                    <p className="form-error"><FontAwesomeIcon icon={['fas', 'triangle-exclamation']} /> {resetForm.formState.errors.password.message}</p>
                                 )}
                             </div>
 
@@ -179,7 +182,7 @@ export default function ForgotPasswordPage() {
                                     type="password"
                                 />
                                 {resetForm.formState.errors.password_confirmation && (
-                                    <p className="form-error">⚠ {resetForm.formState.errors.password_confirmation.message}</p>
+                                    <p className="form-error"><FontAwesomeIcon icon={['fas', 'triangle-exclamation']} /> {resetForm.formState.errors.password_confirmation.message}</p>
                                 )}
                             </div>
                         </div>
