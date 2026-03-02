@@ -170,8 +170,8 @@ export default function UsersPage() {
                                         <td>{user.email}</td>
                                         <td>{user.phone ?? <span style={{ color: 'var(--text-muted)' }}>—</span>}</td>
                                         <td>
-                                            <span className={`badge ${user.phone_verified_at ? 'badge-verified' : 'badge-unverified'}`}>
-                                                {user.phone_verified_at ? <><FontAwesomeIcon icon={['fas', 'check']} /> Verified</> : <><FontAwesomeIcon icon={['fas', 'xmark']} /> Unverified</>}
+                                            <span className={`badge ${user.phoneVerifiedAt ? 'badge-verified' : 'badge-unverified'}`}>
+                                                {user.phoneVerifiedAt ? <><FontAwesomeIcon icon={['fas', 'check']} /> Verified</> : <><FontAwesomeIcon icon={['fas', 'xmark']} /> Unverified</>}
                                             </span>
                                         </td>
                                         <td>
@@ -180,7 +180,7 @@ export default function UsersPage() {
                                             </span>
                                         </td>
                                         <td style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                                            {new Date(user.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                            {new Date(user.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
                                         </td>
                                         <td>
                                             <div className="table-actions">

@@ -4,6 +4,15 @@ import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import User from '#models/user'
 import CustomerSubscription from '#models/customer_subscription'
 import CustomerOnt from '#models/customer_ont'
+import Odp from '#models/odp'
+
+export enum CustomerStatus {
+    DAFTAR = 'daftar',
+    PEMASANGAN = 'pemasangan',
+    AKTIF = 'aktif',
+    ISOLIR = 'isolir',
+    NON_AKTIF = 'non aktif'
+}
 
 export default class Customer extends BaseModel {
     @column({ isPrimary: true })
@@ -11,6 +20,9 @@ export default class Customer extends BaseModel {
 
     @column({ columnName: 'user_id' })
     declare userId: number
+
+    @column()
+    declare status: CustomerStatus
 
     @belongsTo(() => User)
     declare user: BelongsTo<typeof User>
@@ -30,6 +42,15 @@ export default class Customer extends BaseModel {
     @column()
     declare longitude: number | null
 
+    @column({ columnName: 'odp_id' })
+    declare odpId: number | null
+
+    @belongsTo(() => Odp)
+    declare odp: BelongsTo<typeof Odp>
+
+    @column({ columnName: 'odp_port' })
+    declare odpPort: number | null
+
     @column({ columnName: 'pppoe_user' })
     declare pppoeUser: string | null
 
@@ -41,6 +62,21 @@ export default class Customer extends BaseModel {
 
     @hasMany(() => CustomerOnt)
     declare onts: HasMany<typeof CustomerOnt>
+
+    /**
+     * Generate unique PPPoE username and random password
+     */
+    async generatePppoeCredentials() {
+        if (this.pppoeUser) return
+
+        const now = DateTime.now()
+        const datePart = now.toFormat('ddHHmm')
+        const namePart = this.fullName.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10)
+        const randomChar = String.fromCharCode(65 + Math.floor(Math.random() * 26)) // Random A-Z
+
+        this.pppoeUser = `${datePart}-${namePart}${randomChar}@homenet.id`
+        this.pppoePassword = '123'
+    }
 
     @column.dateTime({ autoCreate: true, columnName: 'created_at' })
     declare createdAt: DateTime

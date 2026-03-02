@@ -22,13 +22,16 @@ export default class WhatsappService {
                 normalizedPhone = '62' + normalizedPhone
             }
 
+            logger.info(`[WhatsappService] Normalizing phone: ${phone} -> ${normalizedPhone}`)
+
             // Push to custom queue 'whatsapp'
+            logger.info(`[WhatsappService] Pushing to queue: whatsapp, payload: ${JSON.stringify({ phone: normalizedPhone, message })}`)
             const job = await DatabaseQueue.push('whatsapp', {
                 phone: normalizedPhone,
                 message: message
             })
 
-            logger.info(`WhatsApp message to ${normalizedPhone} queued successfully. Job ID: ${job.id}`)
+            logger.info(`[WhatsappService] WhatsApp message to ${normalizedPhone} queued successfully. Job ID: ${job.id}`)
             return { success: true, queued: true, jobId: job.id }
 
         } catch (error: any) {

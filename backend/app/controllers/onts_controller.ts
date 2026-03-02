@@ -1,7 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { DateTime } from 'luxon'
 import CustomerOnt from '#models/customer_ont'
-import Customer from '#models/customer'
+import Customer, { CustomerStatus } from '#models/customer'
 import GenieAcsService from '#services/genie_acs_service'
 import { createOntValidator, updateOntValidator, setWifiValidator } from '#validators/ont_validator'
 
@@ -58,8 +58,8 @@ export default class OntsController {
             .preload('subscriptions', (q) => q.where('status', 'active').preload('product'))
             .firstOrFail()
 
-        // Default WiFi SSID = pppoe_user jika tidak diisi
-        const defaultSsid = data.wifi_ssid ?? (customer.pppoeUser ? `Homenet-${customer.pppoeUser}` : null)
+        // Default WiFi SSID = pppoe_user (without domain) jika tidak diisi, truncate max 32 chars
+        const defaultSsid = data.wifi_ssid ?? (customer.pppoeUser ? `Homenet-${customer.pppoeUser.split('@')[0]}`.substring(0, 32) : null)
 
         const ont = await CustomerOnt.create({
             customerId: data.customer_id,
@@ -135,7 +135,17 @@ export default class OntsController {
             })
         }
 
-        const info = await this.genie.getOntInfo(ont.genieacsDeviceId)
+        let info = await this.genie.getOntInfo(ont.genieacsDeviceId)
+
+        // Self-healing: jika gagal karena ID salah/berubah, coba cari by serial number
+        if (info.error && ont.serialNumber) {
+            const device = await this.genie.getDeviceBySerial(ont.serialNumber)
+            if (device && device._id !== ont.genieacsDeviceId) {
+                ont.genieacsDeviceId = device._id
+                await ont.save()
+                info = await this.genie.getOntInfo(device._id)
+            }
+        }
         return response.ok({
             success: true,
             data: {
@@ -159,7 +169,17 @@ export default class OntsController {
             return response.badRequest({ success: false, message: 'Perangkat belum terhubung ke GenieACS' })
         }
 
-        const success = await this.genie.reboot(ont.genieacsDeviceId)
+        let deviceId: string = ont.genieacsDeviceId
+        if (ont.serialNumber) {
+            const device = await this.genie.getDeviceBySerial(ont.serialNumber)
+            if (device && device._id !== deviceId) {
+                deviceId = device._id
+                ont.genieacsDeviceId = deviceId
+                await ont.save()
+            }
+        }
+
+        const success = await this.genie.reboot(deviceId)
         if (!success) return response.internalServerError({ success: false, message: 'Gagal mengirim perintah reboot ke ONT' })
 
         return response.ok({ success: true, message: 'Perintah reboot berhasil dikirim ke ONT' })
@@ -176,7 +196,17 @@ export default class OntsController {
             return response.badRequest({ success: false, message: 'Perangkat belum terhubung ke GenieACS' })
         }
 
-        const success = await this.genie.setWifi(ont.genieacsDeviceId, data.ssid, data.password)
+        let deviceId: string = ont.genieacsDeviceId
+        if (ont.serialNumber) {
+            const device = await this.genie.getDeviceBySerial(ont.serialNumber)
+            if (device && device._id !== deviceId) {
+                deviceId = device._id
+                ont.genieacsDeviceId = deviceId
+                await ont.save()
+            }
+        }
+
+        const success = await this.genie.setWifi(deviceId, data.ssid, data.password)
 
         if (!success) return response.internalServerError({ success: false, message: 'Gagal mengubah pengaturan WiFi ONT' })
 
@@ -198,7 +228,15 @@ export default class OntsController {
             return response.badRequest({ success: false, message: 'Perangkat belum terhubung ke GenieACS' })
         }
 
-        const success = await this.genie.factoryReset(ont.genieacsDeviceId)
+        let deviceId: string = ont.genieacsDeviceId
+        if (ont.serialNumber) {
+            const device = await this.genie.getDeviceBySerial(ont.serialNumber)
+            if (device && device._id !== deviceId) {
+                deviceId = device._id
+            }
+        }
+
+        const success = await this.genie.factoryReset(deviceId)
         if (!success) return response.internalServerError({ success: false, message: 'Gagal mengirim perintah factory reset ke ONT' })
 
         // Reset provision_status ke pending setelah factory reset
@@ -238,9 +276,9 @@ export default class OntsController {
         const customer = ont.customer
         const activeSub = customer.subscriptions?.[0]
 
-        // WiFi SSID: prioritas dari ont.wifiSsid, fallback ke pppoe_user, fallback ke nama pelanggan
+        // WiFi SSID: prioritas dari ont.wifiSsid, fallback ke pppoe_user (tanpa domain), fallback ke nama pelanggan, truncate 32 chars
         const wifiSsid = ont.wifiSsid
-            ?? (customer.pppoeUser ? `Homenet-${customer.pppoeUser}` : `Homenet-${customer.fullName.replace(/\s+/g, '')}`)
+            ?? (customer.pppoeUser ? `Homenet-${customer.pppoeUser.split('@')[0]}`.substring(0, 32) : `Homenet-${customer.fullName.replace(/\\s+/g, '')}`.substring(0, 32))
         const wifiPassword = ont.wifiPassword ?? customer.pppoePassword ?? null
 
         if (!wifiPassword) {
@@ -281,6 +319,15 @@ export default class OntsController {
         ont.provisionedAt = DateTime.now()
         await ont.save()
 
+        // logic: if success, set customer to aktif
+        if (ont.provisionStatus === 'provisioned') {
+            await ont.load('customer')
+            if (ont.customer) {
+                ont.customer.status = CustomerStatus.AKTIF
+                await ont.customer.save()
+            }
+        }
+
         return response.ok({ success: true, ont_id: ont.id })
     }
 
@@ -316,7 +363,7 @@ export default class OntsController {
         }
 
         // Push provisioning task ke GenieACS
-        const wifiSsid = ont.wifiSsid ?? `Homenet-${customer.pppoeUser}`
+        const wifiSsid = ont.wifiSsid ?? `Homenet-${customer.pppoeUser.split('@')[0]}`.substring(0, 32)
         const wifiPassword = ont.wifiPassword ?? customer.pppoePassword
 
         const success = await this.genie.provisionOnt({
@@ -339,6 +386,10 @@ export default class OntsController {
         ont.provisionStatus = 'provisioned'
         ont.provisionedAt = DateTime.now()
         await ont.save()
+
+        // logic: manual provision also sets customer to aktif
+        customer.status = CustomerStatus.AKTIF
+        await customer.save()
 
         return response.ok({
             success: true,

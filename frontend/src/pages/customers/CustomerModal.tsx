@@ -3,7 +3,7 @@ import {
     Form, FormGroup, Label, Input, FormFeedback,
     Button, Spinner, Row, Col,
 } from 'reactstrap'
-import type { Customer, Product } from '../../types'
+import type { Customer, Product, Odp } from '../../types'
 import api from '../../lib/axios'
 import LocationPicker from '../../components/LocationPicker'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -19,6 +19,7 @@ export default function CustomerModal({ isOpen, onClose, customer }: CustomerMod
     const isEdit = !!customer
     const [loading, setLoading] = useState(false)
     const [products, setProducts] = useState<Product[]>([])
+    const [odps, setOdps] = useState<Odp[]>([])
 
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -29,11 +30,17 @@ export default function CustomerModal({ isOpen, onClose, customer }: CustomerMod
     const [longitude, setLongitude] = useState<number | null>(null)
     const [pppoeUser, setPppoeUser] = useState('')
     const [pppoePassword, setPppoePassword] = useState('')
+    const [status, setStatus] = useState<Customer['status']>('daftar')
     const [productId, setProductId] = useState<number | null>(null)
+    const [odpId, setOdpId] = useState<number | null>(null)
+    const [odpPort, setOdpPort] = useState<string>('')
     const [errors, setErrors] = useState<Record<string, string>>({})
 
     useEffect(() => {
-        if (isOpen) { fetchProducts() }
+        if (isOpen) {
+            fetchProducts()
+            fetchOdps()
+        }
         if (customer && isOpen) {
             setFullName(customer.fullName)
             setPhone(customer.phone)
@@ -41,12 +48,15 @@ export default function CustomerModal({ isOpen, onClose, customer }: CustomerMod
             setLatitude(customer.latitude ? Number(customer.latitude) : null)
             setLongitude(customer.longitude ? Number(customer.longitude) : null)
             setPppoeUser(customer.pppoeUser || '')
+            setStatus(customer.status)
             const activeSub = customer.subscriptions?.find(s => s.status === 'active')
-            if (activeSub) setProductId(activeSub.product_id)
+            if (activeSub) setProductId(activeSub.productId)
+            setOdpId(customer.odpId ?? null)
+            setOdpPort(customer.odpPort?.toString() ?? '')
         } else if (!customer) {
             setEmail(''); setPassword(''); setFullName(''); setPhone('')
             setAddress(''); setLatitude(null); setLongitude(null)
-            setPppoeUser(''); setPppoePassword(''); setProductId(null); setErrors({})
+            setPppoeUser(''); setPppoePassword(''); setStatus('daftar'); setProductId(null); setErrors({})
         }
     }, [customer, isOpen])
 
@@ -59,10 +69,31 @@ export default function CustomerModal({ isOpen, onClose, customer }: CustomerMod
         } catch { /* silent */ }
     }
 
+    const fetchOdps = async () => {
+        try {
+            const res = await api.get<any>('/odps')
+            const list = res.data?.data || []
+            setOdps(list)
+        } catch { /* silent */ }
+    }
+
     const productOptions = products.map(p => ({
         value: p.id,
         label: `${p.name} — Rp${p.price.toLocaleString()}`,
     }))
+
+    const odpOptions = odps.map(o => ({
+        value: o.id,
+        label: o.name,
+    }))
+
+    const statusOptions = [
+        { value: 'daftar', label: 'Daftar' },
+        { value: 'pemasangan', label: 'Pemasangan' },
+        { value: 'aktif', label: 'Aktif' },
+        { value: 'isolir', label: 'Isolir' },
+        { value: 'non aktif', label: 'Non Aktif' },
+    ]
 
     const validate = () => {
         const newErrs: Record<string, string> = {}
@@ -82,7 +113,14 @@ export default function CustomerModal({ isOpen, onClose, customer }: CustomerMod
         if (!validate()) return
         setLoading(true)
         try {
-            const payload: any = { fullName, phone, address, latitude, longitude, pppoeUser: pppoeUser || null, pppoePassword: pppoePassword || null }
+            const payload: any = {
+                fullName, phone, address, latitude, longitude,
+                pppoeUser: pppoeUser || null,
+                pppoePassword: pppoePassword || null,
+                status,
+                odpId: status === 'pemasangan' ? (odpId || null) : (customer?.odpId || null),
+                odpPort: status === 'pemasangan' ? (odpPort ? Number(odpPort) : null) : (customer?.odpPort || null)
+            }
             if (isEdit) {
                 await api.put(`/customers/${customer.id}`, payload)
             } else {
@@ -109,7 +147,7 @@ export default function CustomerModal({ isOpen, onClose, customer }: CustomerMod
 
     return (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-            <div className="modal" style={{ maxWidth: '820px', width: '92%' }}>
+            <div className="modal" style={{ maxWidth: '880px', width: '92%' }}>
                 <div className="modal-header">
                     <h3 className="modal-title">
                         {isEdit
@@ -122,181 +160,242 @@ export default function CustomerModal({ isOpen, onClose, customer }: CustomerMod
                 </div>
 
                 <Form onSubmit={handleSubmit}>
-                    <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 1fr) 1fr', gap: '24px' }}>
-
-                        {/* Kolom Kiri */}
-                        <div>
-                            {!isEdit && (
-                                <div style={{ marginBottom: '24px' }}>
-                                    <h6 style={{ marginBottom: 12, fontSize: '14px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <FontAwesomeIcon icon={['fas', 'key']} style={{ color: 'var(--accent)' }} /> Akun Login
-                                    </h6>
-                                    <FormGroup>
-                                        <Label className="form-label">Email *</Label>
-                                        <Input
-                                            type="email"
-                                            className={`form-input ${errors.email ? 'is-invalid' : ''}`}
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            placeholder="pelanggan@email.com"
-                                            invalid={!!errors.email}
-                                        />
-                                        <FormFeedback>{errors.email}</FormFeedback>
-                                    </FormGroup>
-                                    <FormGroup>
-                                        <Label className="form-label">Password *</Label>
-                                        <Input
-                                            type="password"
-                                            className={`form-input ${errors.password ? 'is-invalid' : ''}`}
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            placeholder="Minimal 8 karakter"
-                                            invalid={!!errors.password}
-                                        />
-                                        <FormFeedback>{errors.password}</FormFeedback>
-                                    </FormGroup>
-                                </div>
-                            )}
-
-                            <div>
-                                <h6 style={{ marginBottom: 12, fontSize: '14px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <FontAwesomeIcon icon={['fas', 'user']} style={{ color: 'var(--accent)' }} /> Data Pelanggan
-                                </h6>
-                                <FormGroup>
-                                    <Label className="form-label">Nama Lengkap *</Label>
-                                    <Input
-                                        type="text"
-                                        className="form-input"
-                                        value={fullName}
-                                        onChange={(e) => setFullName(e.target.value)}
-                                        placeholder="Nama Sesuai KTP"
-                                        invalid={!!errors.fullName}
-                                    />
-                                    <FormFeedback>{errors.fullName}</FormFeedback>
-                                </FormGroup>
-                                <FormGroup>
-                                    <Label className="form-label">No. HP (WhatsApp) *</Label>
-                                    <Input
-                                        type="text"
-                                        className="form-input"
-                                        value={phone}
-                                        onChange={(e) => setPhone(e.target.value)}
-                                        placeholder="08123xxxx"
-                                        invalid={!!errors.phone}
-                                    />
-                                    <FormFeedback>{errors.phone}</FormFeedback>
-                                </FormGroup>
-                                <FormGroup>
-                                    <Label className="form-label">Alamat Lengkap</Label>
-                                    <Input
-                                        type="textarea"
-                                        className="form-input"
-                                        rows={3}
-                                        value={address}
-                                        onChange={(e) => setAddress(e.target.value)}
-                                        placeholder="Nama Jalan, RT/RW, dsb"
-                                    />
-                                </FormGroup>
-                            </div>
-                        </div>
-
-                        {/* Kolom Kanan */}
-                        <div>
-                            <div style={{ marginBottom: '24px' }}>
-                                <h6 style={{ marginBottom: 12, fontSize: '14px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <FontAwesomeIcon icon={['fas', 'map-location-dot']} style={{ color: 'var(--accent)' }} /> Titik Koordinat Maps
-                                </h6>
-                                <small style={{ color: 'var(--text-muted)', display: 'block', marginBottom: 10 }}>
-                                    Geser atau klik pada peta untuk menentukan lokasi rumah pelanggan.
-                                </small>
-                                <LocationPicker
-                                    latitude={latitude}
-                                    longitude={longitude}
-                                    onChange={(lat, lng) => { setLatitude(lat); setLongitude(lng) }}
-                                />
-                                {latitude && longitude && (
-                                    <small style={{ display: 'block', marginTop: 8, color: 'var(--success)' }}>
-                                        <FontAwesomeIcon icon={['fas', 'circle-check']} /> Terpilih: {Number(latitude).toFixed(5)}, {Number(longitude).toFixed(5)}
-                                    </small>
+                    <div className="modal-body">
+                        <div className="customer-modal-grid">
+                            {/* KOLOM KIRI: AKUN, IDENTITAS, LAYANAN */}
+                            <div className="modal-column">
+                                {!isEdit && (
+                                    <div className="modal-section-card mb-2">
+                                        <h5 className="section-title">
+                                            <FontAwesomeIcon icon={['fas', 'key']} className="section-icon" />
+                                            AKUN
+                                        </h5>
+                                        <div className="section-content">
+                                            <FormGroup>
+                                                <Label className="field-label">Email *</Label>
+                                                <Input
+                                                    type="email"
+                                                    className="form-control"
+                                                    value={email}
+                                                    onChange={(e) => setEmail(e.target.value)}
+                                                    placeholder="pelanggan@email.com"
+                                                    invalid={!!errors.email}
+                                                />
+                                                <FormFeedback>{errors.email}</FormFeedback>
+                                            </FormGroup>
+                                            <FormGroup>
+                                                <Label className="field-label">Password *</Label>
+                                                <Input
+                                                    type="password"
+                                                    className="form-control"
+                                                    value={password}
+                                                    onChange={(e) => setPassword(e.target.value)}
+                                                    placeholder="Minimal 8 karakter"
+                                                    invalid={!!errors.password}
+                                                />
+                                                <FormFeedback>{errors.password}</FormFeedback>
+                                            </FormGroup>
+                                        </div>
+                                    </div>
                                 )}
-                            </div>
 
-                            <div>
-                                <h6 style={{ marginBottom: 12, fontSize: '14px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <FontAwesomeIcon icon={['fas', 'gear']} style={{ color: 'var(--accent)' }} /> Konfigurasi Layanan
-                                </h6>
-
-                                <FormGroup>
-                                    <Label className="form-label">Produk Berlangganan *</Label>
-                                    {isEdit ? (
-                                        <Input
-                                            className="form-input"
-                                            value={productOptions.find(o => o.value === productId)?.label ?? 'Tidak ada langganan aktif'}
-                                            disabled
-                                        />
-                                    ) : (
-                                        <RSelect
-                                            options={productOptions}
-                                            value={productOptions.find(o => o.value === productId) ?? null}
-                                            onChange={(opt) => setProductId(opt?.value ?? null)}
-                                            placeholder="-- Pilih Paket --"
-                                            isInvalid={!!errors.productId}
-                                        />
-                                    )}
-                                    {isEdit && (
-                                        <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>
-                                            Gunakan fitur <strong>Ganti Pkt</strong> di tabel untuk mengubah layanan.
-                                        </small>
-                                    )}
-                                    {errors.productId && <div className="text-danger mt-1" style={{ fontSize: 13 }}>{errors.productId}</div>}
-                                </FormGroup>
-
-                                <div style={{ padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', marginBottom: '16px', fontSize: '13px', color: 'var(--text-muted)', borderLeft: '3px solid var(--accent)' }}>
-                                    <FontAwesomeIcon icon={['fas', 'circle-info']} />{' '}
-                                    Mengisi PPPoE User &amp; Password akan otomatis melakukan pendaftaran (sync) pada Router Mikrotik.
+                                <div className="modal-section-card mb-2">
+                                    <h5 className="section-title">
+                                        <FontAwesomeIcon icon={['fas', 'id-card']} className="section-icon" />
+                                        IDENTITAS
+                                    </h5>
+                                    <div className="section-content">
+                                        <FormGroup>
+                                            <Label className="field-label">Nama Lengkap *</Label>
+                                            <Input
+                                                type="text"
+                                                className="form-control"
+                                                value={fullName}
+                                                onChange={(e) => setFullName(e.target.value)}
+                                                placeholder="Nama Sesuai KTP"
+                                                invalid={!!errors.fullName}
+                                            />
+                                            <FormFeedback>{errors.fullName}</FormFeedback>
+                                        </FormGroup>
+                                        <FormGroup>
+                                            <Label className="field-label">No. HP (WhatsApp) *</Label>
+                                            <Input
+                                                type="text"
+                                                className="form-control"
+                                                value={phone}
+                                                onChange={(e) => setPhone(e.target.value)}
+                                                placeholder="08123xxxx"
+                                                invalid={!!errors.phone}
+                                            />
+                                            <FormFeedback>{errors.phone}</FormFeedback>
+                                        </FormGroup>
+                                    </div>
                                 </div>
 
-                                <Row>
-                                    <Col md={6}>
+                                <div className="modal-section-card">
+                                    <h5 className="section-title">
+                                        <FontAwesomeIcon icon={['fas', 'layer-group']} className="section-icon" />
+                                        LAYANAN
+                                    </h5>
+                                    <div className="section-content">
                                         <FormGroup>
-                                            <Label className="form-label">PPPoE Username</Label>
+                                            <Label className="field-label">Produk Berlangganan *</Label>
+                                            {isEdit ? (
+                                                <Input
+                                                    className="form-control"
+                                                    value={productOptions.find(o => o.value === productId)?.label ?? 'N/A'}
+                                                    disabled
+                                                />
+                                            ) : (
+                                                <RSelect
+                                                    options={productOptions}
+                                                    value={productOptions.find(o => o.value === productId) ?? null}
+                                                    onChange={(opt) => setProductId(opt?.value ?? null)}
+                                                    placeholder="Pilih Paket"
+                                                    isInvalid={!!errors.productId}
+                                                />
+                                            )}
+                                            {errors.productId && <div className="invalid-feedback d-block">{errors.productId}</div>}
+                                            {isEdit && (
+                                                <small className="text-muted mt-1 d-block">
+                                                    Gunakan fitur <b>Ganti Pkt</b> di tabel untuk mengubah layanan.
+                                                </small>
+                                            )}
+                                        </FormGroup>
+
+                                        {isEdit && (
+                                            <>
+                                                <FormGroup className="mt-2">
+                                                    <Label className="field-label">Status Customer</Label>
+                                                    <RSelect
+                                                        options={statusOptions}
+                                                        value={statusOptions.find(s => s.value === status) || null}
+                                                        onChange={(opt) => setStatus(opt?.value as any)}
+                                                        placeholder="Pilih Status"
+                                                    />
+                                                </FormGroup>
+
+                                                {status === 'pemasangan' && (
+                                                    <div className="odp-selection-card mt-2 p-3 rounded" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}>
+                                                        <FormGroup>
+                                                            <Label className="field-label">ODP (Optical Distribution Point)</Label>
+                                                            <RSelect
+                                                                options={odpOptions}
+                                                                value={odpOptions.find(o => o.value === odpId) ?? null}
+                                                                onChange={(opt) => setOdpId(opt?.value as number ?? null)}
+                                                                placeholder="Pilih ODP"
+                                                            />
+                                                        </FormGroup>
+                                                        <FormGroup className="mt-2 mb-0">
+                                                            <Label className="field-label">Port ODP</Label>
+                                                            <Input
+                                                                type="number"
+                                                                className="form-control"
+                                                                value={odpPort}
+                                                                onChange={(e) => setOdpPort(e.target.value)}
+                                                                placeholder="Contoh: 1"
+                                                            />
+                                                        </FormGroup>
+                                                    </div>
+                                                )}
+
+                                                <div className="pppoe-group-card mt-2">
+                                                    <div className="pppoe-header">
+                                                        <FontAwesomeIcon icon={['fas', 'network-wired']} /> Kredensial PPPoE
+                                                    </div>
+                                                    <Row>
+                                                        <Col md={6}>
+                                                            <FormGroup>
+                                                                <Label className="field-label">Username</Label>
+                                                                <Input
+                                                                    type="text"
+                                                                    className="form-control"
+                                                                    value={pppoeUser}
+                                                                    onChange={(e) => setPppoeUser(e.target.value)}
+                                                                    placeholder="auto-generated"
+                                                                />
+                                                            </FormGroup>
+                                                        </Col>
+                                                        <Col md={6}>
+                                                            <FormGroup>
+                                                                <Label className="field-label">Password</Label>
+                                                                <Input
+                                                                    type="text"
+                                                                    className="form-control"
+                                                                    value={pppoePassword}
+                                                                    onChange={(e) => setPppoePassword(e.target.value)}
+                                                                    placeholder="Biarkan kosong jika tak diubah"
+                                                                />
+                                                            </FormGroup>
+                                                        </Col>
+                                                    </Row>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* KOLOM KANAN: LOKASI PEMASANGAN */}
+                            <div className="modal-column">
+                                <div className="modal-section-card">
+                                    <h5 className="section-title">
+                                        <FontAwesomeIcon icon={['fas', 'map-location-dot']} className="section-icon" />
+                                        LOKASI PEMASANGAN
+                                    </h5>
+                                    <div className="section-content">
+                                        <FormGroup>
+                                            <Label className="field-label">Alamat Lengkap</Label>
                                             <Input
-                                                type="text"
-                                                className="form-input"
-                                                value={pppoeUser}
-                                                onChange={(e) => setPppoeUser(e.target.value)}
-                                                placeholder="customer_01"
+                                                type="textarea"
+                                                className="form-control"
+                                                rows={3}
+                                                value={address}
+                                                onChange={(e) => setAddress(e.target.value)}
+                                                placeholder="Nama Jalan, RT/RW, Desa/Kelurahan..."
                                             />
                                         </FormGroup>
-                                    </Col>
-                                    <Col md={6}>
-                                        <FormGroup>
-                                            <Label className="form-label">PPPoE Password</Label>
-                                            <Input
-                                                type="text"
-                                                className="form-input"
-                                                value={pppoePassword}
-                                                onChange={(e) => setPppoePassword(e.target.value)}
-                                                placeholder={isEdit ? '(Biarkan jika tak diubah)' : 'Boleh kosong'}
+
+                                        <div className="map-wrapper flex-grow-1">
+                                            <LocationPicker
+                                                latitude={latitude}
+                                                longitude={longitude}
+                                                onChange={(lat, lng) => { setLatitude(lat); setLongitude(lng) }}
                                             />
-                                        </FormGroup>
-                                    </Col>
-                                </Row>
+                                        </div>
+
+                                        <div className="coord-info mt-3 p-3 rounded" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}>
+                                            <div className="d-flex justify-content-between align-items-center mb-1">
+                                                <span className="text-secondary" style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.5px' }}>
+                                                    <FontAwesomeIcon icon={['fas', 'compass']} className="me-1" />
+                                                    TITIK KOORDINAT
+                                                </span>
+                                                {latitude && longitude ? (
+                                                    <span className="badge bg-success-light text-success" style={{ fontSize: '10px' }}>
+                                                        <FontAwesomeIcon icon={['fas', 'check']} /> TERPASANG
+                                                    </span>
+                                                ) : (
+                                                    <span className="badge bg-warning-light text-warning" style={{ fontSize: '10px' }}>BELUM DISET</span>
+                                                )}
+                                            </div>
+                                            <div style={{ fontSize: '15px', fontWeight: 700, letterSpacing: '0.5px', color: 'var(--text-primary)' }}>
+                                                {latitude && longitude ? `${latitude.toFixed(6)}, ${longitude.toFixed(6)}` : '-'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div className="modal-footer">
-                        <Button type="button" color="secondary" outline onClick={() => onClose()}>
+                        <Button type="button" color="secondary" onClick={() => onClose()}>
                             Batal
                         </Button>
-                        <Button type="submit" color="primary" disabled={loading}>
-                            {loading
-                                ? <><Spinner size="sm" /> Menyimpan...</>
-                                : isEdit
-                                    ? <><FontAwesomeIcon icon={['fas', 'floppy-disk']} /> Simpan Perubahan</>
-                                    : <><FontAwesomeIcon icon={['fas', 'user-plus']} /> Tambah Pelanggan</>
-                            }
+                        <Button type="submit" color="primary" disabled={loading} style={{ minWidth: '180px' }}>
+                            {loading ? <Spinner size="sm" /> : (
+                                <><FontAwesomeIcon icon={isEdit ? ['fas', 'save'] : ['fas', 'user-plus']} /> {isEdit ? 'Simpan Perubahan' : 'Daftarkan Pelanggan'}</>
+                            )}
                         </Button>
                     </div>
                 </Form>

@@ -3,10 +3,10 @@ export interface User {
     name: string
     email: string
     phone: string | null
-    phone_verified_at: string | null
+    phoneVerifiedAt: string | null
     role: 1 | 2
-    created_at: string
-    updated_at: string | null
+    createdAt: string
+    updatedAt: string | null
 }
 
 export interface Device {
@@ -15,8 +15,8 @@ export interface Device {
     host: string
     user: string
     port: number
-    created_at: string
-    updated_at: string | null
+    createdAt: string
+    updatedAt: string | null
 }
 
 export interface DeviceStatus {
@@ -32,11 +32,11 @@ export interface Product {
     id: number
     name: string
     price: number
-    download_speed: number
-    upload_speed: number
+    downloadSpeed: number
+    uploadSpeed: number
     description?: string
-    created_at: string
-    updated_at: string
+    createdAt: string
+    updatedAt: string
 }
 
 export interface ProductSyncResult {
@@ -45,12 +45,12 @@ export interface ProductSyncResult {
 
 export interface CustomerSubscription {
     id: number
-    customer_id: number
-    product_id: number
+    customerId: number,
+    productId: number,
     status: 'active' | 'inactive'
     product?: Product
-    created_at: string
-    updated_at: string
+    createdAt: string
+    updatedAt: string
 }
 
 export interface Invoice {
@@ -79,7 +79,23 @@ export interface Customer {
     longitude?: number
     pppoeUser?: string
     pppoePassword?: string
+    status: 'daftar' | 'pemasangan' | 'aktif' | 'isolir' | 'non aktif'
+    odpId?: number | null
+    odpPort?: number | null
+    odp?: Odp
+    subscriptions?: CustomerSubscription[]
     onts?: CustomerOnt[]
+    createdAt: string
+    updatedAt: string
+}
+
+export interface Odp {
+    id: number
+    parentId: number | null
+    name: string
+    description: string | null
+    latitude: number | null
+    longitude: number | null
     createdAt: string
     updatedAt: string
 }
@@ -109,13 +125,12 @@ export interface OntInfo {
     uptime?: string | number
     wanIp?: string
     ssid?: string
-    lastInform?: string
-    error?: string
+    lastInform?: string,
+    error?: string,
     // mapping fields
-    ont_id?: number
-    ont_label?: string | null
-    serial_number?: string | null
-    genieacs_device_id?: string
+    ontId?: number,
+    ontLabel?: string | null,
+    genieacsDeviceId?: string,
 }
 
 export interface GenieDevice {

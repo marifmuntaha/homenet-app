@@ -1,4 +1,4 @@
-import Customer from '#models/customer'
+import Customer, { CustomerStatus } from '#models/customer'
 import CustomerSubscription from '#models/customer_subscription'
 import Device from '#models/device'
 import MikrotikService from '#services/mikrotik_service'
@@ -34,6 +34,10 @@ export default class CustomerService {
                 }
             })
         )
+
+        // logic: set customer status to isolir
+        customer.status = CustomerStatus.ISOLIR
+        await customer.save()
     }
 
     /**
@@ -77,5 +81,9 @@ export default class CustomerService {
                 }
             })
         )
+
+        // logic: set customer status back to aktif
+        customer.status = CustomerStatus.AKTIF
+        await customer.save()
     }
 }

@@ -1,10 +1,12 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import Customer from '#models/customer'
+import logger from '@adonisjs/core/services/logger'
+import Customer, { CustomerStatus } from '#models/customer'
 import User from '#models/user'
 import CustomerSubscription from '#models/customer_subscription'
 import Product from '#models/product'
 import Device from '#models/device'
 import MikrotikService from '#services/mikrotik_service'
+import WhatsappService from '#services/whatsapp_service'
 import {
     createCustomerValidator,
     updateCustomerValidator,
@@ -36,11 +38,33 @@ export default class CustomersController {
             })
         }
 
-        const customers = await query.paginate(page, limit)
+        const [customers, summary] = await Promise.all([
+            query.paginate(page, limit),
+            Customer.query().groupBy('status').select('status').count('* as count')
+        ])
+
+        const counts = {
+            total: 0,
+            daftar: 0,
+            pemasangan: 0,
+            aktif: 0,
+            isolir: 0,
+            'non aktif': 0
+        }
+
+        summary.forEach((item: any) => {
+            const status = (item.status || item.$extras.status) as keyof typeof counts
+            const count = Number(item.$extras.count)
+            if (status in counts) {
+                (counts[status] as number) = count
+            }
+            counts.total += count
+        })
 
         return response.ok({
             success: true,
             data: customers,
+            summary: counts
         })
     }
     /**
@@ -168,6 +192,22 @@ export default class CustomersController {
             syncResults = await this.syncPPPSecretToAllDevices('create', customer.pppoeUser, customer.pppoePassword ?? undefined, product.name)
         }
 
+        // 6. Send WhatsApp Welcome Message
+        const welcomeMessage = `Halo Bapak/Ibu *${customer.fullName}*,
+
+Terima kasih telah memilih layanan internet kami! 🙏
+
+Pesanan Anda telah kami terima. Tim teknisi kami akan melakukan pemasangan perangkat internet di lokasi Anda dalam waktu *1-2 hari kerja*.
+
+Mohon pastikan nomor ini aktif agar tim kami dapat menghubungi Anda untuk konfirmasi jadwal pemasangan.
+
+Terima kasih,
+*Homenet Team*`
+
+        logger.info(`Dispatching WhatsApp message to ${customer.phone}`)
+        const whatsappRes = await WhatsappService.sendMessage(customer.phone, welcomeMessage)
+        logger.info(`WhatsApp dispatch result: ${JSON.stringify(whatsappRes)}`)
+
         await customer.load('subscriptions', (q) => q.preload('product'))
 
         return response.created({
@@ -195,7 +235,31 @@ export default class CustomersController {
         }
 
         const oldPppoeUser = customer.pppoeUser
-        customer.merge(data)
+        const oldStatus = customer.status
+
+        customer.merge(data as any)
+
+        // logic: if status set to pemasangan and pppoe is empty, generate it
+        if (customer.status === CustomerStatus.PEMASANGAN && !customer.pppoeUser) {
+            await customer.generatePppoeCredentials()
+        }
+
+        // 1. Send WhatsApp Message if status changed to 'pemasangan'
+        if (oldStatus !== customer.status && customer.status === CustomerStatus.PEMASANGAN) {
+            const installMessage = `Halo Bapak/Ibu *${customer.fullName}*,
+
+Kabar baik! Tim teknisi kami telah ditugaskan untuk melakukan pemasangan perangkat internet di lokasi Anda. 🛠️
+
+*Penting:*
+Mohon untuk tidak memberikan biaya apa pun kepada teknisi di lapangan. Semua biaya administrasi dan pemasangan hanya dilakukan melalui metode pembayaran resmi kami.
+
+Tim kami akan segera menghubungi Anda untuk koordinasi waktu kedatangan.
+
+Terima kasih,
+*Homenet Team*`
+            await WhatsappService.sendMessage(customer.phone, installMessage)
+        }
+
         await customer.save()
 
         // Sync Mikrotik if PPPoE credentials changed

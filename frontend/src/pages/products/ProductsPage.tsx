@@ -154,10 +154,10 @@ export default function ProductsPage() {
                                         <td>
                                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                                 <span className="badge badge-verified" style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#0ea5e9' }}>
-                                                    <FontAwesomeIcon icon={['fas', 'arrow-down']} /> {product.download_speed} Mbps
+                                                    <FontAwesomeIcon icon={['fas', 'arrow-down']} /> {product.downloadSpeed} Mbps
                                                 </span>
                                                 <span className="badge badge-verified" style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#0ea5e9' }}>
-                                                    <FontAwesomeIcon icon={['fas', 'arrow-up']} /> {product.upload_speed} Mbps
+                                                    <FontAwesomeIcon icon={['fas', 'arrow-up']} /> {product.uploadSpeed} Mbps
                                                 </span>
                                             </div>
                                         </td>

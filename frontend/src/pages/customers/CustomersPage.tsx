@@ -21,6 +21,14 @@ export default function CustomersPage() {
     const [page, setPage] = useState(1)
     const [lastPage, setLastPage] = useState(1)
     const [search, setSearch] = useState('')
+    const [summary, setSummary] = useState({
+        total: 0,
+        daftar: 0,
+        pemasangan: 0,
+        aktif: 0,
+        isolir: 0,
+        'non aktif': 0
+    })
 
     // Modals
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -47,8 +55,12 @@ export default function CustomersPage() {
             ])
 
             if (res.status === 'fulfilled') {
-                setCustomers(res.value.data.data.data)
-                setLastPage(res.value.data.data.meta.lastPage)
+                const responseData = res.value.data as any
+                setCustomers(responseData.data.data)
+                setLastPage(responseData.data.meta.lastPage)
+                if (responseData.summary) {
+                    setSummary(responseData.summary)
+                }
             }
             if (activeRes.status === 'fulfilled' && activeRes.value.data?.data) {
                 setActivePppoes(activeRes.value.data.data)
@@ -86,7 +98,7 @@ export default function CustomersPage() {
 
     const openChangeProductDialog = (customer: Customer) => {
         const activeSub = customer.subscriptions?.find(s => s.status === 'active')
-        setChangeCustomerInfo({ id: customer.id, productId: activeSub?.product_id || null })
+        setChangeCustomerInfo({ id: customer.id, productId: activeSub?.productId || null })
         setIsChangeProductOpen(true)
     }
 
@@ -103,32 +115,59 @@ export default function CustomersPage() {
     return (
         <Layout title="Manajemen Pelanggan">
             {/* Stats */}
-            <div className="stats-grid">
+            <div className="stats-grid mb-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
                 <div className="stat-card">
                     <div className="stat-icon stat-icon-blue">
                         <FontAwesomeIcon icon={['fas', 'users']} className="fa-icon-stat" />
                     </div>
                     <div className="stat-info">
                         <p>Total Pelanggan</p>
-                        <h3>{lastPage > 0 ? customers.length + (page - 1) * 15 : 0}</h3>
+                        <h3>{summary.total}</h3>
                     </div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon stat-icon-green">
-                        <FontAwesomeIcon icon={['fas', 'box']} className="fa-icon-stat" />
+                    <div className="stat-icon stat-icon-blue" style={{ background: 'rgba(56, 189, 248, 0.14)', color: '#38bdf8' }}>
+                        <FontAwesomeIcon icon={['fas', 'user-clock']} className="fa-icon-stat" />
                     </div>
                     <div className="stat-info">
-                        <p>Pelanggan Berlangganan</p>
-                        <h3>{customers.filter(c => c.subscriptions?.some(s => s.status === 'active')).length}</h3>
+                        <p>Terdaftar</p>
+                        <h3>{summary.daftar}</h3>
                     </div>
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon stat-icon-amber">
-                        <FontAwesomeIcon icon={['fas', 'triangle-exclamation']} className="fa-icon-stat" />
+                        <FontAwesomeIcon icon={['fas', 'screwdriver-wrench']} className="fa-icon-stat" />
                     </div>
                     <div className="stat-info">
-                        <p>Belum Aktif PPPoE</p>
-                        <h3>{customers.filter(c => !c.pppoeUser).length}</h3>
+                        <p>Pemasangan</p>
+                        <h3>{summary.pemasangan}</h3>
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-icon stat-icon-green">
+                        <FontAwesomeIcon icon={['fas', 'user-check']} className="fa-icon-stat" />
+                    </div>
+                    <div className="stat-info">
+                        <p>Pelanggan Aktif</p>
+                        <h3>{summary.aktif}</h3>
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-icon stat-icon-red">
+                        <FontAwesomeIcon icon={['fas', 'user-slash']} className="fa-icon-stat" />
+                    </div>
+                    <div className="stat-info">
+                        <p>Terisolir</p>
+                        <h3>{summary.isolir}</h3>
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-icon stat-icon-secondary">
+                        <FontAwesomeIcon icon={['fas', 'user-xmark']} className="fa-icon-stat" />
+                    </div>
+                    <div className="stat-info">
+                        <p>Non Aktif</p>
+                        <h3>{summary['non aktif']}</h3>
                     </div>
                 </div>
             </div>
@@ -179,6 +218,7 @@ export default function CustomersPage() {
                                 <tr>
                                     <th>#</th>
                                     <th>Pelanggan</th>
+                                    <th>Status</th>
                                     <th>Kontak</th>
                                     <th>Paket Aktif</th>
                                     <th>PPPoE User</th>
@@ -224,6 +264,15 @@ export default function CustomersPage() {
                                                         )}
                                                     </div>
                                                 </div>
+                                            </td>
+                                            <td>
+                                                <span className={`badge badge-${c.status === 'aktif' ? 'success' :
+                                                    c.status === 'isolir' ? 'danger' :
+                                                        c.status === 'pemasangan' ? 'warning' :
+                                                            c.status === 'non aktif' ? 'secondary' : 'info'
+                                                    }`}>
+                                                    {c.status.toUpperCase()}
+                                                </span>
                                             </td>
                                             <td>{c.phone ? <span><FontAwesomeIcon icon={['fas', 'phone']} /> {c.phone}</span> : <span style={{ color: 'var(--text-muted)' }}>—</span>}</td>
                                             <td>

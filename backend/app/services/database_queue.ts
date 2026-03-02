@@ -15,9 +15,11 @@ export default class DatabaseQueue {
         job.attempts = 0
         job.maxAttempts = 3 // default retries
         job.availableAt = availableAt
+
+        logger.info(`[DatabaseQueue] Saving job to ${queueName}...`)
         await job.save()
 
-        logger.debug(`[Queue] Job pushed to ${queueName} queue (ID: ${job.id})`)
+        logger.info(`[DatabaseQueue] Job pushed to ${queueName} queue (ID: ${job.id})`)
         return job
     }
 

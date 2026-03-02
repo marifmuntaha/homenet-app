@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, useMapEvents, LayersControl } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -34,8 +34,8 @@ function LocationMarker({ position, onChange }: { position: L.LatLng | null, onC
 }
 
 export default function LocationPicker({ latitude, longitude, onChange }: LocationPickerProps) {
-    // Default to Indonesia center if no location is set
-    const defaultCenter: [number, number] = [-0.789275, 113.921327]
+    // Default to Jepara if no location is set
+    const defaultCenter: [number, number] = [-6.58913, 110.66890]
     const initCenter: [number, number] = latitude && longitude ? [latitude, longitude] : defaultCenter
 
     const [position, setPosition] = useState<L.LatLng | null>(
@@ -51,16 +51,45 @@ export default function LocationPicker({ latitude, longitude, onChange }: Locati
     }, [latitude, longitude])
 
     return (
-        <div style={{ height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+        <div style={{ height: '350px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
             <MapContainer
                 center={initCenter}
-                zoom={latitude && longitude ? 15 : 5}
+                zoom={latitude && longitude ? 17 : 5}
                 style={{ height: '100%', width: '100%' }}
             >
-                <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                />
+                <LayersControl position="topright">
+                    <LayersControl.BaseLayer name="OpenStreetMap">
+                        <TileLayer
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        />
+                    </LayersControl.BaseLayer>
+
+                    <LayersControl.BaseLayer checked name="Google Hybrid">
+                        <TileLayer
+                            url="http://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+                            subdomains={['mt0', 'mt1', 'mt2', 'mt3']}
+                            attribution='&copy; Google Maps'
+                        />
+                    </LayersControl.BaseLayer>
+
+                    <LayersControl.BaseLayer name="Google Satellite">
+                        <TileLayer
+                            url="http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+                            subdomains={['mt0', 'mt1', 'mt2', 'mt3']}
+                            attribution='&copy; Google Maps'
+                        />
+                    </LayersControl.BaseLayer>
+
+                    <LayersControl.BaseLayer name="Google Roadmap">
+                        <TileLayer
+                            url="http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+                            subdomains={['mt0', 'mt1', 'mt2', 'mt3']}
+                            attribution='&copy; Google Maps'
+                        />
+                    </LayersControl.BaseLayer>
+                </LayersControl>
+
                 <LocationMarker
                     position={position}
                     onChange={(lat, lng) => {

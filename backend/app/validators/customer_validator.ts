@@ -25,6 +25,10 @@ export const createCustomerValidator = vine.compile(
 
         // Initial Subscription
         productId: vine.number().min(1),
+
+        // ODP (optional)
+        odpId: vine.number().optional().nullable(),
+        odpPort: vine.number().optional().nullable(),
     })
 )
 
@@ -42,6 +46,10 @@ export const updateCustomerValidator = vine.compile(
 
         pppoeUser: vine.string().trim().maxLength(100).optional().nullable(),
         pppoePassword: vine.string().maxLength(100).optional().nullable(),
+        status: vine.enum(['daftar', 'pemasangan', 'aktif', 'isolir', 'non aktif']).optional(),
+
+        odpId: vine.number().optional().nullable(),
+        odpPort: vine.number().optional().nullable(),
     })
 )
 

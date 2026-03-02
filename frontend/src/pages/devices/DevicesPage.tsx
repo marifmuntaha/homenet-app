@@ -148,7 +148,7 @@ export default function DevicesPage() {
             {/* Table Card */}
             <div className="card">
                 <div className="card-header">
-                    <h2 className="card-title">Daftar Device Mikrotik</h2>
+                    <h2 className="card-title">Daftar Perangkat</h2>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                         <div className="search-box">
                             <span className="search-icon">
@@ -245,7 +245,7 @@ export default function DevicesPage() {
                                                 <StatusBadge status={status} onRefresh={() => fetchSingleStatus(device.id)} />
                                             </td>
                                             <td style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                                                {new Date(device.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                {new Date(device.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
                                             </td>
                                             <td>
                                                 <div className="table-actions">

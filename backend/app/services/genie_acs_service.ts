@@ -77,7 +77,7 @@ export default class GenieAcsService {
     private timeout: number
 
     constructor() {
-        this.baseUrl = env.get('GENIEACS_NBI_URL', 'https://acs-nbi.own-server.web.id')
+        this.baseUrl = env.get('GENIEACS_NBI_URL', 'http://103.139.192.150:1457')
         this.auth = {
             username: env.get('GENIEACS_NBI_USER', 'admin'),
             password: env.get('GENIEACS_NBI_PASS', 'admin'),

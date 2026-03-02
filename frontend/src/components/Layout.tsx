@@ -15,6 +15,14 @@ export default function Layout({ children, title }: LayoutProps) {
     const navigate = useNavigate()
     const location = useLocation()
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+    const [currentTime, setCurrentTime] = useState(new Date())
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date())
+        }, 1000)
+        return () => clearInterval(timer)
+    }, [])
 
     useEffect(() => {
         // Close sidebar on route change (mobile)
@@ -46,7 +54,7 @@ export default function Layout({ children, title }: LayoutProps) {
                         <FontAwesomeIcon icon={['fas', 'wifi']} />
                     </div>
                     <div className="sidebar-logo-text">
-                        <h1>Homenet</h1>
+                        <h1>HOME-NET</h1>
                         <span>Admin Panel</span>
                     </div>
                 </div>
@@ -64,34 +72,6 @@ export default function Layout({ children, title }: LayoutProps) {
                                 </span>
                                 Dashboard
                             </NavLink>
-                            <NavLink
-                                to="/customers"
-                                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                            >
-                                <span className="nav-icon fa-icon-nav">
-                                    <FontAwesomeIcon icon={['fas', 'user-group']} />
-                                </span>
-                                Pelanggan
-                            </NavLink>
-                            <NavLink
-                                to="/invoices"
-                                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                            >
-                                <span className="nav-icon fa-icon-nav">
-                                    <FontAwesomeIcon icon={['fas', 'file-invoice-dollar']} />
-                                </span>
-                                Tagihan
-                            </NavLink>
-                            <NavLink
-                                to="/users"
-                                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                            >
-                                <span className="nav-icon fa-icon-nav">
-                                    <FontAwesomeIcon icon={['fas', 'users']} />
-                                </span>
-                                Pengguna
-                            </NavLink>
-
                             <div className="nav-section-label" style={{ marginTop: '24px' }}>Master Data</div>
                             <NavLink
                                 to="/devices"
@@ -125,9 +105,38 @@ export default function Layout({ children, title }: LayoutProps) {
                                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                             >
                                 <span className="nav-icon fa-icon-nav">
-                                    <FontAwesomeIcon icon={['fas', 'router']} />
+                                    <FontAwesomeIcon icon={['fas', 'wifi']} />
                                 </span>
-                                Manajemen ONT
+                                ONT
+                            </NavLink>
+                            <div className="nav-section-label" style={{ marginTop: '24px' }}>PELANGGAN</div>
+                            <NavLink
+                                to="/customers"
+                                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                            >
+                                <span className="nav-icon fa-icon-nav">
+                                    <FontAwesomeIcon icon={['fas', 'user-group']} />
+                                </span>
+                                Pelanggan
+                            </NavLink>
+                            <NavLink
+                                to="/users"
+                                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                            >
+                                <span className="nav-icon fa-icon-nav">
+                                    <FontAwesomeIcon icon={['fas', 'users']} />
+                                </span>
+                                Pengguna
+                            </NavLink>
+                            <div className="nav-section-label" style={{ marginTop: '24px' }}>KEUANGAN</div>
+                            <NavLink
+                                to="/invoices"
+                                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                            >
+                                <span className="nav-icon fa-icon-nav">
+                                    <FontAwesomeIcon icon={['fas', 'file-invoice-dollar']} />
+                                </span>
+                                Tagihan
                             </NavLink>
                         </>
                     ) : (
@@ -175,7 +184,7 @@ export default function Layout({ children, title }: LayoutProps) {
             {/* Main */}
             <div className="main-content">
                 <header className="topbar">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div className="topbar-left">
                         <button
                             className="menu-toggle"
                             onClick={() => setIsSidebarOpen(true)}
@@ -183,6 +192,24 @@ export default function Layout({ children, title }: LayoutProps) {
                             <FontAwesomeIcon icon={['fas', 'bars']} />
                         </button>
                         <h2 className="topbar-title">{title}</h2>
+                    </div>
+
+                    <div className="topbar-clock">
+                        <div className="clock-date">
+                            {currentTime.toLocaleDateString('id-ID', {
+                                weekday: 'long',
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric'
+                            })}
+                        </div>
+                        <div className="clock-time">
+                            {currentTime.toLocaleTimeString('id-ID', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit'
+                            })}
+                        </div>
                     </div>
                 </header>
                 <main className="page-content">{children}</main>

@@ -31,8 +31,8 @@ export default function ProductModal({ product, onClose }: ProductModalProps) {
             setForm({
                 name: product.name,
                 price: String(product.price),
-                downloadSpeed: String(product.download_speed),
-                uploadSpeed: String(product.upload_speed),
+                downloadSpeed: String(product.downloadSpeed),
+                uploadSpeed: String(product.uploadSpeed),
                 description: product.description || '',
             })
         } else {
