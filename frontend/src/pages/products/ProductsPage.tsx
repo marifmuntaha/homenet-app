@@ -179,10 +179,10 @@ export default function ProductsPage() {
                                         <td>
                                             <div className="table-actions">
                                                 <button className="btn btn-ghost btn-sm" onClick={() => openEdit(product)}>
-                                                    <FontAwesomeIcon icon={['fas', 'pen-to-square']} />
+                                                    <FontAwesomeIcon icon={['fas', 'pen-to-square']} /> Edit
                                                 </button>
                                                 <button className="btn btn-danger btn-sm" onClick={() => setDeleteTarget(product)}>
-                                                    <FontAwesomeIcon icon={['fas', 'trash']} />
+                                                    <FontAwesomeIcon icon={['fas', 'trash']} /> Hapus
                                                 </button>
                                             </div>
                                         </td>

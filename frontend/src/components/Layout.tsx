@@ -65,24 +65,6 @@ export default function Layout({ children, title }: LayoutProps) {
                                 Dashboard
                             </NavLink>
                             <NavLink
-                                to="/devices"
-                                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                            >
-                                <span className="nav-icon fa-icon-nav">
-                                    <FontAwesomeIcon icon={['fas', 'server']} />
-                                </span>
-                                Perangkat
-                            </NavLink>
-                            <NavLink
-                                to="/products"
-                                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                            >
-                                <span className="nav-icon fa-icon-nav">
-                                    <FontAwesomeIcon icon={['fas', 'box']} />
-                                </span>
-                                Produk
-                            </NavLink>
-                            <NavLink
                                 to="/customers"
                                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                             >
@@ -108,6 +90,44 @@ export default function Layout({ children, title }: LayoutProps) {
                                     <FontAwesomeIcon icon={['fas', 'users']} />
                                 </span>
                                 Pengguna
+                            </NavLink>
+
+                            <div className="nav-section-label" style={{ marginTop: '24px' }}>Master Data</div>
+                            <NavLink
+                                to="/devices"
+                                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                            >
+                                <span className="nav-icon fa-icon-nav">
+                                    <FontAwesomeIcon icon={['fas', 'server']} />
+                                </span>
+                                Perangkat
+                            </NavLink>
+                            <NavLink
+                                to="/products"
+                                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                            >
+                                <span className="nav-icon fa-icon-nav">
+                                    <FontAwesomeIcon icon={['fas', 'box']} />
+                                </span>
+                                Produk
+                            </NavLink>
+                            <NavLink
+                                to="/odps"
+                                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                            >
+                                <span className="nav-icon fa-icon-nav">
+                                    <FontAwesomeIcon icon={['fas', 'sitemap']} />
+                                </span>
+                                ODP
+                            </NavLink>
+                            <NavLink
+                                to="/onts"
+                                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                            >
+                                <span className="nav-icon fa-icon-nav">
+                                    <FontAwesomeIcon icon={['fas', 'router']} />
+                                </span>
+                                Manajemen ONT
                             </NavLink>
                         </>
                     ) : (

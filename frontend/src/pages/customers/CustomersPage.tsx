@@ -290,7 +290,7 @@ export default function CustomersPage() {
                                                         onClick={() => handleDelete(c)}
                                                         disabled={deletingId === c.id}
                                                     >
-                                                        {deletingId === c.id ? <span className="spinner" /> : <FontAwesomeIcon icon={['fas', 'trash']} />}
+                                                        {deletingId === c.id ? <span className="spinner" /> : <><FontAwesomeIcon icon={['fas', 'trash']} /> Hapus</>}
                                                     </button>
                                                 </div>
                                             </td>

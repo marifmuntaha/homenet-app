@@ -10,6 +10,8 @@ import CustomersPage from './pages/customers/CustomersPage'
 import InvoicesPage from './pages/invoices/InvoicesPage'
 import AdminDashboardPage from './pages/dashboard/AdminDashboardPage'
 import CustomerDashboardPage from './pages/customer/CustomerDashboardPage'
+import OdpsPage from './pages/odps/OdpsPage'
+import OntsPage from './pages/onts/OntsPage'
 import type { ReactNode } from 'react'
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -60,6 +62,8 @@ function AppRoutes() {
       <Route path="/products" element={<AdminRoute><ProductsPage /></AdminRoute>} />
       <Route path="/customers" element={<AdminRoute><CustomersPage /></AdminRoute>} />
       <Route path="/invoices" element={<AdminRoute><InvoicesPage /></AdminRoute>} />
+      <Route path="/odps" element={<AdminRoute><OdpsPage /></AdminRoute>} />
+      <Route path="/onts" element={<AdminRoute><OntsPage /></AdminRoute>} />
 
       {/* Customer Routes */}
       <Route path="/customer/dashboard" element={<ProtectedRoute><CustomerDashboardPage /></ProtectedRoute>} />

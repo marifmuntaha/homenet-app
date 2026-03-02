@@ -3,6 +3,7 @@ import { BaseModel, column, belongsTo, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import User from '#models/user'
 import CustomerSubscription from '#models/customer_subscription'
+import CustomerOnt from '#models/customer_ont'
 
 export default class Customer extends BaseModel {
     @column({ isPrimary: true })
@@ -37,6 +38,9 @@ export default class Customer extends BaseModel {
 
     @hasMany(() => CustomerSubscription)
     declare subscriptions: HasMany<typeof CustomerSubscription>
+
+    @hasMany(() => CustomerOnt)
+    declare onts: HasMany<typeof CustomerOnt>
 
     @column.dateTime({ autoCreate: true, columnName: 'created_at' })
     declare createdAt: DateTime

@@ -79,10 +79,53 @@ export interface Customer {
     longitude?: number
     pppoeUser?: string
     pppoePassword?: string
-    subscriptions?: CustomerSubscription[]
-    invoices?: Invoice[]
+    onts?: CustomerOnt[]
     createdAt: string
     updatedAt: string
+}
+
+export interface CustomerOnt {
+    id: number
+    customerId: number
+    customer?: Customer
+    genieacsDeviceId: string | null
+    serialNumber: string | null
+    ontLabel: string | null
+    wifiSsid: string | null
+    wifiPassword: string | null
+    provisionStatus: 'pending' | 'provisioned' | 'failed'
+    provisionedAt: string | null
+    createdAt: string
+    updatedAt: string | null
+}
+
+export interface OntInfo {
+    online: boolean
+    deviceId?: string
+    serialNumber?: string
+    productClass?: string
+    softwareVersion?: string
+    hardwareVersion?: string
+    uptime?: string | number
+    wanIp?: string
+    ssid?: string
+    lastInform?: string
+    error?: string
+    // mapping fields
+    ont_id?: number
+    ont_label?: string | null
+    serial_number?: string | null
+    genieacs_device_id?: string
+}
+
+export interface GenieDevice {
+    device_id: string
+    serial_number?: string
+    product_class?: string
+    manufacturer?: string
+    last_inform?: string
+    registered?: string
+    is_mapped?: boolean
 }
 
 

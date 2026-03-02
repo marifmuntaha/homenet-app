@@ -18,6 +18,8 @@ const AuthController = () => import('#controllers/auth_controller')
 const InvoicesController = () => import('#controllers/invoices_controller')
 const CustomerDashboardController = () => import('#controllers/customer_dashboard_controller')
 const AdminDashboardController = () => import('#controllers/admin_dashboard_controller')
+const OdpsController = () => import('#controllers/odps_controller')
+const OntsController = () => import('#controllers/onts_controller')
 
 /*
 |--------------------------------------------------------------------------
@@ -68,6 +70,26 @@ router
     router.post('/devices', [DevicesController, 'store'])
     router.put('/devices/:id', [DevicesController, 'update'])
     router.delete('/devices/:id', [DevicesController, 'destroy'])
+
+    // ODPs CRUD
+    router.get('/odps', [OdpsController, 'index'])
+    router.post('/odps', [OdpsController, 'store'])
+    router.put('/odps/:id', [OdpsController, 'update'])
+    router.delete('/odps/:id', [OdpsController, 'destroy'])
+
+    // ONTs (GenieACS) - CRUD Mapping
+    router.get('/onts/discover', [OntsController, 'discover'])
+    router.get('/onts', [OntsController, 'index'])
+    router.get('/onts/:id', [OntsController, 'show'])
+    router.post('/onts', [OntsController, 'store'])
+    router.put('/onts/:id', [OntsController, 'update'])
+    router.delete('/onts/:id', [OntsController, 'destroy'])
+    // ONTs - Aksi GenieACS
+    router.get('/onts/:id/info', [OntsController, 'info'])
+    router.post('/onts/:id/reboot', [OntsController, 'reboot'])
+    router.post('/onts/:id/set-wifi', [OntsController, 'setWifi'])
+    router.post('/onts/:id/factory-reset', [OntsController, 'factoryReset'])
+    router.post('/onts/:id/sync-provision', [OntsController, 'syncProvision'])
 
     // Devices - Mikrotik connection
     router.get('/devices/:id/status', [DevicesController, 'status'])
@@ -121,5 +143,9 @@ router
   .use(middleware.auth())
 
 router.post('/api/v1/callback/midtrans', [InvoicesController, 'webhook'])
+
+// GenieACS ZTP Provisioning (public — dipanggil oleh GenieACS Extension)
+router.get('/onts/provision/:serial', [OntsController, 'provision'])
+router.post('/onts/provision/:serial/done', [OntsController, 'provisionDone'])
 
 // trigger rebuild

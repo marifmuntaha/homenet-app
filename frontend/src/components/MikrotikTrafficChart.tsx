@@ -66,7 +66,7 @@ export default function MikrotikTrafficChart() {
     const [interfaces, setInterfaces] = useState<Interface[]>([])
     const [selectedInterface, setSelectedInterface] = useState<string>('')
     const [data, setData] = useState<TrafficPoint[]>([])
-    const [isPolling, setIsPolling] = useState(false)
+    const [isPolling, setIsPolling] = useState(true) // Auto-start polling
     const [error, setError] = useState<string | null>(null)
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
     const prevRef = useRef<RawTraffic | null>(null)
@@ -92,7 +92,10 @@ export default function MikrotikTrafficChart() {
             const ifaces: Interface[] = res.data?.data ?? []
             const sorted = [...ifaces].sort((a, b) => (b.running ? 1 : 0) - (a.running ? 1 : 0))
             setInterfaces(sorted)
-            if (sorted.length > 0) setSelectedInterface(sorted[0].name)
+            if (sorted.length > 0) {
+                setSelectedInterface(sorted[0].name)
+                setIsPolling(true) // Ensure polling starts when interface is auto-selected
+            }
         }).catch(() => setInterfaces([]))
     }, [selectedDevice])
 
@@ -173,7 +176,7 @@ export default function MikrotikTrafficChart() {
     const currentUpload = data.length > 0 ? data[data.length - 1].upload : 0
 
     return (
-        <div className="card" style={{ marginTop: 24 }}>
+        <div className="card h-100 d-flex flex-column">
             <div className="card-header" style={{ flexWrap: 'wrap', gap: 12, alignItems: 'flex-start' }}>
                 <div>
                     <h2 className="card-title">
@@ -194,12 +197,11 @@ export default function MikrotikTrafficChart() {
                             onChange={(opt) => {
                                 if (opt) {
                                     setSelectedDevice(opt.value as string)
-                                    setIsPolling(false)
+                                    // Don't stop polling, just reset data
                                     setData([])
                                     prevRef.current = null
                                 }
                             }}
-                            isDisabled={isPolling}
                             placeholder="Pilih device..."
                         />
                     </div>
@@ -214,28 +216,14 @@ export default function MikrotikTrafficChart() {
                                     setSelectedInterface(opt.value)
                                     setData([])
                                     prevRef.current = null
+                                    setIsPolling(true)
                                 }
                             }}
-                            isDisabled={isPolling || interfaces.length === 0}
+                            isDisabled={interfaces.length === 0}
                             placeholder={interfaces.length === 0 ? 'Memuat...' : 'Pilih interface...'}
                             formatOptionLabel={formatInterfaceOption}
                         />
                     </div>
-
-                    {/* Start/Stop Button */}
-                    <Button
-                        color={isPolling ? 'danger' : 'primary'}
-                        size="sm"
-                        onClick={() => {
-                            setIsPolling(p => !p)
-                            if (isPolling) { setData([]); prevRef.current = null }
-                        }}
-                        disabled={!selectedInterface}
-                        style={{ height: 42, minWidth: 140, display: 'flex', alignItems: 'center', gap: 8 }}
-                    >
-                        <FontAwesomeIcon icon={['fas', isPolling ? 'stop' : 'play']} />
-                        {isPolling ? 'Stop' : 'Mulai Monitor'}
-                    </Button>
                 </div>
             </div>
 
@@ -275,14 +263,14 @@ export default function MikrotikTrafficChart() {
             )}
 
             {/* Chart */}
-            <div style={{ padding: '16px', height: 300 }}>
+            <div style={{ padding: '16px', flex: 1, minHeight: 300 }}>
                 {data.length < 2 ? (
                     <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', flexDirection: 'column', gap: 10 }}>
                         <FontAwesomeIcon icon={['fas', 'chart-area']} style={{ fontSize: '2.5rem', opacity: 0.3 }} />
                         <p style={{ margin: 0, fontSize: '0.85rem' }}>
-                            {isPolling
-                                ? 'Mengumpulkan data, mohon tunggu...'
-                                : 'Pilih perangkat & interface, lalu klik "Mulai Monitor"'
+                            {selectedInterface
+                                ? 'Mengumpulkan data lalu lintas jaringan...'
+                                : 'Pilih perangkat & interface untuk melihat data'
                             }
                         </p>
                     </div>

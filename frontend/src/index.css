@@ -1447,6 +1447,53 @@ tbody tr:hover {
 }
 
 /* ===============================
+   SKELETON LOADER
+================================ */
+.skeleton {
+  background: var(--bg-hover);
+  background: linear-gradient(90deg, var(--bg-hover) 25%, var(--border) 50%, var(--bg-hover) 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-text {
+  height: 14px;
+  width: 100%;
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+
+.skeleton-title {
+  height: 24px;
+  width: 50%;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.skeleton-chart {
+  height: 250px;
+  width: 100%;
+  border-radius: var(--radius);
+}
+
+.skeleton-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+/* ===============================
    RESPONSIVE DESIGN
 ================================ */
 

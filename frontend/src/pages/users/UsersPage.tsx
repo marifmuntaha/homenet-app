@@ -187,8 +187,11 @@ export default function UsersPage() {
                                                 <button className="btn btn-ghost btn-sm" onClick={() => openEdit(user)}>
                                                     <FontAwesomeIcon icon={['fas', 'pen-to-square']} /> Edit
                                                 </button>
-                                                <button className="btn btn-danger btn-sm" onClick={() => setDeleteTarget(user)}>
-                                                    <FontAwesomeIcon icon={['fas', 'trash']} />
+                                                <button
+                                                    className="btn btn-danger btn-sm"
+                                                    onClick={() => setDeleteTarget(user)}
+                                                >
+                                                    <FontAwesomeIcon icon={['fas', 'trash']} /> Hapus
                                                 </button>
                                             </div>
                                         </td>

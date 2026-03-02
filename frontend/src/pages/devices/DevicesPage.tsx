@@ -253,7 +253,7 @@ export default function DevicesPage() {
                                                         <FontAwesomeIcon icon={['fas', 'pen-to-square']} /> Edit
                                                     </button>
                                                     <button className="btn btn-danger btn-sm" onClick={() => setDeleteTarget(device)}>
-                                                        <FontAwesomeIcon icon={['fas', 'trash']} />
+                                                        <FontAwesomeIcon icon={['fas', 'trash']} /> Hapus
                                                     </button>
                                                 </div>
                                             </td>

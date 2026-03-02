@@ -6,7 +6,10 @@ import Device from '#models/device'
 import MikrotikService from '#services/mikrotik_service'
 
 export default class AdminDashboardController {
-    async index({ response }: HttpContext) {
+    async index({ request, response }: HttpContext) {
+        const month = request.input('month') // Expected format: "01", "02", etc.
+        const year = request.input('year')   // Expected format: "2024"
+
         // 1. Basic Stats
         const totalCustomers = await Customer.query().count('* as total')
 
@@ -31,7 +34,7 @@ export default class AdminDashboardController {
             })
         )
 
-        // 3. Income Stats
+        // 3. Income Stats (General)
         const now = DateTime.now()
         const startOfMonth = now.startOf('month').toSQL()
         const startOfYear = now.startOf('year').toSQL()
@@ -47,7 +50,70 @@ export default class AdminDashboardController {
         const monthlyIncome = monthlyPaidInvoices.reduce((acc, curr) => acc + Number(curr.totalAmount), 0)
         const yearlyIncome = yearlyPaidInvoices.reduce((acc, curr) => acc + Number(curr.totalAmount), 0)
 
-        // 4. Recent Invoices
+        // 4. Period Filtering (New Feature)
+        let filteredInvoicesAmount = 0
+        let filteredPaidAmount = 0
+        let filteredPeriod = now.toFormat('MM-yyyy')
+
+        if (month && year) {
+            filteredPeriod = `${month}-${year}`
+            const periodInvoices = await Invoice.query()
+                .where('month', filteredPeriod)
+
+            filteredInvoicesAmount = periodInvoices.reduce((acc, curr) => acc + Number(curr.totalAmount), 0)
+            filteredPaidAmount = periodInvoices
+                .filter(i => i.status === 'paid')
+                .reduce((acc, curr) => acc + Number(curr.totalAmount), 0)
+        } else {
+            // Default to current month if not provided
+            const currentMonthStr = now.toFormat('MM-yyyy')
+            const currentPeriodInvoices = await Invoice.query()
+                .where('month', currentMonthStr)
+
+            filteredInvoicesAmount = currentPeriodInvoices.reduce((acc, curr) => acc + Number(curr.totalAmount), 0)
+            filteredPaidAmount = currentPeriodInvoices
+                .filter(i => i.status === 'paid')
+                .reduce((acc, curr) => acc + Number(curr.totalAmount), 0)
+        }
+
+        // 5. Income History (Last 6 Months) - Real Data from DB
+        const incomeHistory: { month: string, cash: number, online: number }[] = []
+
+        // Fetch all paid invoices for the last 6 months
+        const sixMonthsAgo = now.minus({ months: 5 }).startOf('month').toSQL()
+        const historicalInvoices = await Invoice.query()
+            .where('status', 'paid')
+            .where('created_at', '>=', sixMonthsAgo!)
+
+        for (let i = 5; i >= 0; i--) {
+            const date = now.minus({ months: i })
+            const mStr = date.toFormat('MM-yyyy')
+
+            // Filter invoices for this specific month
+            const monthInvoices = historicalInvoices.filter(inv => inv.month === mStr)
+
+            // Split amounts by payment type
+            const cashAmount = monthInvoices
+                .filter(inv => inv.paymentType === 'cash')
+                .reduce((acc, curr) => acc + Number(curr.totalAmount), 0)
+
+            const onlineAmount = monthInvoices
+                .filter(inv => inv.paymentType === 'midtrans' || !inv.paymentType) // default non-cash to online for safety, or just midtrans
+                .reduce((acc, curr) => acc + Number(curr.totalAmount), 0)
+
+            // Also adding invoices that don't have a specific paymentType (legacy data) to cash for now
+            const legacyAmount = monthInvoices
+                .filter(inv => !inv.paymentType)
+                .reduce((acc, curr) => acc + Number(curr.totalAmount), 0)
+
+            incomeHistory.push({
+                month: mStr,
+                cash: cashAmount + legacyAmount,
+                online: onlineAmount
+            })
+        }
+
+        // 6. Recent Invoices
         const recentInvoices = await Invoice.query()
             .preload('customer')
             .orderBy('created_at', 'desc')
@@ -62,10 +128,16 @@ export default class AdminDashboardController {
                     unpaidInvoicesCount: unpaidInvoices.length,
                     unpaidInvoicesAmount: unpaidAmount,
                     monthlyIncome,
-                    yearlyIncome
+                    yearlyIncome,
+                    filteredInvoicesAmount,
+                    filteredPaidAmount,
+                    filteredPeriod
                 },
+                // Return incomeHistory for the dashboard chart
+                incomeHistory,
                 recentInvoices
             }
         })
     }
 }
+// Trigger rebuild: 1772294680
