@@ -64,18 +64,19 @@ export default class Customer extends BaseModel {
     declare onts: HasMany<typeof CustomerOnt>
 
     /**
-     * Generate unique PPPoE username and random password
+     * Generate unique PPPoE username and random password.
+     * @param force - jika true, regenerate meski sudah ada (untuk tombol Generate)
      */
-    async generatePppoeCredentials() {
-        if (this.pppoeUser) return
+    async generatePppoeCredentials(force = false) {
+        if (this.pppoeUser && !force) return
 
         const now = DateTime.now()
-        const datePart = now.toFormat('ddHHmm')
+        const datePart = now.toFormat('ddHHmm')                                         // contoh: 041522
         const namePart = this.fullName.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10)
-        const randomChar = String.fromCharCode(65 + Math.floor(Math.random() * 26)) // Random A-Z
+        const randomChar = String.fromCharCode(65 + Math.floor(Math.random() * 26))     // A-Z
 
         this.pppoeUser = `${datePart}-${namePart}${randomChar}@homenet.id`
-        this.pppoePassword = '123'
+        this.pppoePassword = '1234'
     }
 
     @column.dateTime({ autoCreate: true, columnName: 'created_at' })

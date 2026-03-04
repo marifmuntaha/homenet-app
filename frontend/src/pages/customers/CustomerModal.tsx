@@ -35,6 +35,7 @@ export default function CustomerModal({ isOpen, onClose, customer }: CustomerMod
     const [odpId, setOdpId] = useState<number | null>(null)
     const [odpPort, setOdpPort] = useState<string>('')
     const [errors, setErrors] = useState<Record<string, string>>({})
+    const [generateLoading, setGenerateLoading] = useState(false)
 
     useEffect(() => {
         if (isOpen) {
@@ -140,6 +141,24 @@ export default function CustomerModal({ isOpen, onClose, customer }: CustomerMod
             }
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleGeneratePppoe = async () => {
+        if (!customer) return
+        setGenerateLoading(true)
+        try {
+            const res = await api.post<{ success: boolean; pppoe_user: string; pppoe_password: string }>(
+                `/customers/${customer.id}/generate-pppoe`
+            )
+            if (res.data.success) {
+                setPppoeUser(res.data.pppoe_user)
+                setPppoePassword(res.data.pppoe_password)
+            }
+        } catch {
+            alert('Gagal generate kredensial PPPoE')
+        } finally {
+            setGenerateLoading(false)
         }
     }
 
@@ -300,8 +319,30 @@ export default function CustomerModal({ isOpen, onClose, customer }: CustomerMod
                                                 )}
 
                                                 <div className="pppoe-group-card mt-2">
-                                                    <div className="pppoe-header">
-                                                        <FontAwesomeIcon icon={['fas', 'network-wired']} /> Kredensial PPPoE
+                                                    <div className="pppoe-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                        <span>
+                                                            <FontAwesomeIcon icon={['fas', 'network-wired']} /> Kredensial PPPoE
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            disabled={generateLoading}
+                                                            onClick={handleGeneratePppoe}
+                                                            style={{
+                                                                display: 'inline-flex', alignItems: 'center', gap: 6,
+                                                                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                                                                color: '#fff', border: 'none', borderRadius: 8,
+                                                                padding: '4px 12px', fontSize: 12, fontWeight: 600,
+                                                                cursor: generateLoading ? 'not-allowed' : 'pointer',
+                                                                opacity: generateLoading ? 0.7 : 1,
+                                                                transition: 'all 0.2s',
+                                                                boxShadow: '0 2px 8px rgba(99,102,241,0.35)',
+                                                            }}
+                                                        >
+                                                            {generateLoading
+                                                                ? <><span style={{ width: 12, height: 12, border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid #fff', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.8s linear infinite' }} /> Generating...</>
+                                                                : <><FontAwesomeIcon icon={['fas', 'wand-magic-sparkles']} /> Generate</>
+                                                            }
+                                                        </button>
                                                     </div>
                                                     <Row>
                                                         <Col md={6}>

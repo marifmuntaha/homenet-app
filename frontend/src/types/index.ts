@@ -127,6 +127,9 @@ export interface OntInfo {
     ssid?: string
     lastInform?: string,
     error?: string,
+    opticalRx?: string    // Redaman terima (dBm)
+    opticalTx?: string    // Daya kirim (dBm)
+    temperature?: string  // Suhu modul optik (°C)
     // mapping fields
     ontId?: number,
     ontLabel?: string | null,

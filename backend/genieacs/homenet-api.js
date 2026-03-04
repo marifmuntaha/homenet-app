@@ -163,3 +163,48 @@ exports.reportDone = function () {
         }
     });
 };
+
+/**
+ * POST: trigger AddObject WANPPPConnection + SetParameterValues PPPoE
+ * via backend NBI relay endpoint.
+ * Dipanggil dari provision script: ext("homenet-api", "provisionWan", serial, user, pass)
+ */
+exports.provisionWan = function () {
+    const args = Array.prototype.slice.call(arguments);
+    const callback = args.find(arg => typeof arg === "function");
+
+    let parts = [];
+    args.forEach(arg => {
+        if (typeof arg !== "function" && arg !== undefined && arg !== null) {
+            const s = String(arg).trim();
+            if (s.indexOf(",") !== -1) {
+                parts = parts.concat(s.split(",").map(p => p.trim()));
+            } else {
+                parts.push(s);
+            }
+        }
+    });
+
+    const serial = parts[0];
+    const pppoeUser = parts[1];
+    const pppoePass = parts[2];
+
+    console.log(`[Homenet] --- provisionWan for serial="${serial}" user="${pppoeUser}" ---`);
+
+    if (!serial || !pppoeUser || !pppoePass) {
+        console.error("[Homenet] provisionWan: missing args");
+        if (callback) callback(null, { success: false, error: "missing_args" });
+        return;
+    }
+
+    const url = HOMENET_BACKEND_URL + "/onts/provision/" + encodeURIComponent(serial) + "/wan";
+    const body = JSON.stringify({ pppoe_user: pppoeUser, pppoe_password: pppoePass });
+
+    request("POST", url, body, (err, data) => {
+        if (callback) {
+            if (err) return callback(null, { success: false, error: err.message });
+            callback(null, data);
+        }
+    });
+};
+

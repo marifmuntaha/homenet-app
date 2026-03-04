@@ -15,6 +15,9 @@ export interface OntInfo {
     ssid?: string
     lastInform?: string
     error?: string
+    opticalRx?: string   // Redaman terima (dBm)
+    opticalTx?: string   // Daya kirim (dBm)
+    temperature?: string // Suhu modul optik (°C)
 }
 
 export interface GenieDevice {
@@ -38,15 +41,45 @@ const PARAMS = {
     HARDWARE_VERSION: 'InternetGatewayDevice.DeviceInfo.HardwareVersion',
     SERIAL_NUMBER: 'InternetGatewayDevice.DeviceInfo.SerialNumber',
 
-    // WAN PPPoE
-    WAN_IP: 'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress',
-    PPPOE_USER: 'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username',
-    PPPOE_PASS: 'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Password',
+    // WAN PPPoE (WANConnectionDevice.3 = VLAN 102)
+    // Berdasarkan temuan NBI: WAN2=TR069 (VLAN 101), maka WAN3=PPPOE (VLAN 102)
+    WAN_IP: 'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.3.WANPPPConnection.1.ExternalIPAddress',
+    WAN_PPP_CONTAINER: 'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.3.WANPPPConnection',
+    PPPOE_USER: 'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.3.WANPPPConnection.1.Username',
+    PPPOE_PASS: 'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.3.WANPPPConnection.1.Password',
+    PPPOE_ENABLE: 'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.3.WANPPPConnection.1.Enable',
+    PPPOE_CONN_TYPE: 'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.3.WANPPPConnection.1.ConnectionType',
+    PPPOE_CON_TRIGGER: 'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.3.WANPPPConnection.1.ConnectionTrigger',
+    PPPOE_NAT: 'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.3.WANPPPConnection.1.NATEnabled',
 
     // WiFi 2.4GHz
     WIFI_SSID: 'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.SSID',
     WIFI_PASS: 'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.KeyPassphrase',
     WIFI_ENABLE: 'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.Enable',
+
+    // Optical / GPON (ZTE V9 / X_CT-COM vendor extensions)
+    // Mencakup variasi firmware F609 V9.0 (EPON/GPON)
+    OPTICAL_RX_PATHS: [
+        'InternetGatewayDevice.WANDevice.1.WANEponInterfaceConfig.Stats.RxOpticalPower',
+        'InternetGatewayDevice.WANDevice.1.WANGponInterfaceConfig.Stats.RxPower',
+        'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.RxOpticalPower',
+        'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.RxPower',
+        'InternetGatewayDevice.WANDevice.1.WANPONInterfaceConfig.Stats.RxPower',
+    ],
+    OPTICAL_TX_PATHS: [
+        'InternetGatewayDevice.WANDevice.1.WANEponInterfaceConfig.Stats.TxOpticalPower',
+        'InternetGatewayDevice.WANDevice.1.WANGponInterfaceConfig.Stats.TxPower',
+        'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.TxOpticalPower',
+        'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.TxPower',
+        'InternetGatewayDevice.WANDevice.1.WANPONInterfaceConfig.Stats.TxPower',
+    ],
+    TEMP_PATHS: [
+        'InternetGatewayDevice.WANDevice.1.WANEponInterfaceConfig.Stats.OnuTemperature',
+        'InternetGatewayDevice.WANDevice.1.WANEponInterfaceConfig.Stats.Temperature',
+        'InternetGatewayDevice.WANDevice.1.WANGponInterfaceConfig.Stats.OpticalTemperature',
+        'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.OnuTemperature',
+        'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.Temperature',
+    ],
 }
 
 /* ─── Helper: encode GenieACS device ID for URL ───────────────── */
@@ -143,6 +176,9 @@ export default class GenieAcsService {
             PARAMS.SERIAL_NUMBER,
             PARAMS.WAN_IP,
             PARAMS.WIFI_SSID,
+            ...PARAMS.OPTICAL_RX_PATHS,
+            ...PARAMS.OPTICAL_TX_PATHS,
+            ...PARAMS.TEMP_PATHS,
         ]
 
         const device = await this.getDevice(deviceId, projection)
@@ -157,6 +193,36 @@ export default class GenieAcsService {
             ? Date.now() - lastInform.getTime() < 10 * 60 * 1000
             : false
 
+        // Format nilai optical power: GenieACS menyimpan dalam unit 0.001 dBm atau mW
+        // ZTE F609/F660 biasanya return dalam 0.01 dBm (integer, e.g. -2050 = -20.50 dBm)
+        const formatOptical = (raw?: string): string | undefined => {
+            if (!raw) return undefined
+            const num = parseFloat(raw)
+            if (isNaN(num)) return raw
+            // Jika nilai absolut > 100, asumsikan unit 0.01 dBm
+            return Math.abs(num) > 100 ? (num / 100).toFixed(2) + ' dBm' : num.toFixed(2) + ' dBm'
+        }
+
+        const formatTemp = (raw?: string): string | undefined => {
+            if (!raw) return undefined
+            const num = parseFloat(raw)
+            if (isNaN(num)) return raw
+            // ZTE biasanya return dalam 0.1 °C atau 0.01 °C
+            // Jika > 500 asumsikan 0.01, jika 100-500 asumsikan 0.1
+            if (num > 500) return (num / 100).toFixed(1) + ' °C'
+            if (num > 100) return (num / 10).toFixed(1) + ' °C'
+            return num.toFixed(1) + ' °C'
+        }
+
+        // Helper untuk mencari nilai pertama yang ada dari daftar path
+        const findFirst = (deviceObj: GenieDevice, paths: string[]): string | undefined => {
+            for (const p of paths) {
+                const val = extractParam(deviceObj, p)
+                if (val !== undefined && val !== '') return val
+            }
+            return undefined
+        }
+
         return {
             online: isOnline,
             deviceId: device._id,
@@ -168,6 +234,31 @@ export default class GenieAcsService {
             wanIp: extractParam(device, PARAMS.WAN_IP),
             ssid: extractParam(device, PARAMS.WIFI_SSID),
             lastInform: device._lastInform,
+            opticalRx: formatOptical(findFirst(device, PARAMS.OPTICAL_RX_PATHS)),
+            opticalTx: formatOptical(findFirst(device, PARAMS.OPTICAL_TX_PATHS)),
+            temperature: formatTemp(findFirst(device, PARAMS.TEMP_PATHS)),
+        }
+    }
+
+    /**
+     * AddObject — buat instance baru dari sebuah object di ONU
+     * Contoh: path = 'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection'
+     */
+    async addObject(deviceId: string, objectPath: string): Promise<boolean> {
+        try {
+            await axios.post(
+                `${this.baseUrl}/devices/${encodeDeviceId(deviceId)}/tasks`,
+                { name: 'addObject', objectName: objectPath },
+                {
+                    auth: this.auth,
+                    timeout: this.timeout,
+                    headers: { 'Content-Type': 'application/json' },
+                }
+            )
+            return true
+        } catch (err) {
+            console.error('GenieACS addObject error:', (err as AxiosError).message)
+            return false
         }
     }
 
@@ -292,9 +383,14 @@ export default class GenieAcsService {
     }
 
     /**
-     * Provision ONT: push SetParameterValues task langsung ke GenieACS via NBI.
-     * Tidak memerlukan extension atau provisioning script.
-     * Task akan dieksekusi pada inform berikutnya (atau segera jika device online).
+     * Provision ONT: push AddObject WANPPPConnection lalu SetParameterValues.
+     * Urutan:
+     *   1. AddObject → GenieACS buat WANPPPConnection.1 di ONT
+     *   2. SetParameterValues → set Enable, ConnectionType, Username, Password
+     *   3. SetParameterValues → set WiFi (opsional)
+     *
+     * Semua task dikirim ke antrian (tanpa connection_request),
+     * dieksekusi berurutan saat ONT inform berikutnya.
      */
     async provisionOnt(options: {
         deviceId: string
@@ -305,32 +401,63 @@ export default class GenieAcsService {
     }): Promise<boolean> {
         const { deviceId, pppoeUser, pppoePassword, wifiSsid, wifiPassword } = options
 
-        const paramValues: [string, string, string][] = []
-
-        if (pppoeUser) paramValues.push([PARAMS.PPPOE_USER, pppoeUser, 'xsd:string'])
-        if (pppoePassword) paramValues.push([PARAMS.PPPOE_PASS, pppoePassword, 'xsd:string'])
-        if (wifiSsid) paramValues.push([PARAMS.WIFI_SSID, wifiSsid, 'xsd:string'])
-        if (wifiPassword) {
-            paramValues.push([PARAMS.WIFI_PASS, wifiPassword, 'xsd:string'])
-            paramValues.push(['InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.BeaconType', '11i', 'xsd:string'])
-            paramValues.push(['InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.IEEE11iEncryptionModes', 'AESEncryption', 'xsd:string'])
-            paramValues.push(['InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.IEEE11iAuthenticationMode', 'PSKAuthentication', 'xsd:string'])
+        // Guard: deviceId wajib ada
+        if (!deviceId) {
+            console.error('GenieACS provisionOnt: deviceId is undefined/null, abort')
+            return false
         }
 
-        if (paramValues.length === 0) return true
+        const tasksUrl = `${this.baseUrl}/devices/${encodeDeviceId(deviceId)}/tasks`
+        console.log('GenieACS provisionOnt: using URL', tasksUrl)
 
         try {
-            // Kirim task ke GenieACS — tanpa ?connection_request agar task diqueue
-            // dan dieksekusi pada inform berikutnya (device tidak harus online sekarang)
-            await axios.post(
-                `${this.baseUrl}/devices/${encodeDeviceId(deviceId)}/tasks`,
-                { name: 'setParameterValues', parameterValues: paramValues },
-                {
-                    auth: this.auth,
-                    timeout: this.timeout,
-                    headers: { 'Content-Type': 'application/json' },
-                }
-            )
+            // ── Step 1: AddObject WANPPPConnection ────────────────────────────
+            // Selalu kirim AddObject — GenieACS/ONT akan ignore jika sudah ada instance .1
+            if (pppoeUser || pppoePassword) {
+                await axios.post(
+                    tasksUrl,
+                    { name: 'addObject', objectName: PARAMS.WAN_PPP_CONTAINER },
+                    { auth: this.auth, timeout: this.timeout, headers: { 'Content-Type': 'application/json' } }
+                )
+                console.log('GenieACS provisionOnt: addObject WANPPPConnection sent for', deviceId)
+            }
+
+            // ── Step 2: SetParameterValues PPPoE ──────────────────────────────
+            if (pppoeUser && pppoePassword) {
+                const pppoeParams: [string, string | boolean, string][] = [
+                    [PARAMS.PPPOE_ENABLE, true, 'xsd:boolean'],
+                    [PARAMS.PPPOE_CONN_TYPE, 'IP_Routed', 'xsd:string'],
+                    [PARAMS.PPPOE_NAT, true, 'xsd:boolean'],
+                    [PARAMS.PPPOE_USER, pppoeUser, 'xsd:string'],
+                    [PARAMS.PPPOE_PASS, pppoePassword, 'xsd:string'],
+                ]
+
+                await axios.post(
+                    tasksUrl,
+                    { name: 'setParameterValues', parameterValues: pppoeParams },
+                    { auth: this.auth, timeout: this.timeout, headers: { 'Content-Type': 'application/json' } }
+                )
+                console.log('GenieACS provisionOnt: setParameterValues PPPoE sent for', deviceId)
+            }
+
+            // ── Step 3: SetParameterValues WiFi ───────────────────────────────
+            if (wifiSsid && wifiPassword) {
+                const wifiParams: [string, string | boolean, string][] = [
+                    [PARAMS.WIFI_ENABLE, true, 'xsd:boolean'],
+                    [PARAMS.WIFI_SSID, wifiSsid, 'xsd:string'],
+                    [PARAMS.WIFI_PASS, wifiPassword, 'xsd:string'],
+                    ['InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.BeaconType', '11i', 'xsd:string'],
+                    ['InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.IEEE11iEncryptionModes', 'AESEncryption', 'xsd:string'],
+                    ['InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.IEEE11iAuthenticationMode', 'PSKAuthentication', 'xsd:string'],
+                ]
+                await axios.post(
+                    tasksUrl,
+                    { name: 'setParameterValues', parameterValues: wifiParams },
+                    { auth: this.auth, timeout: this.timeout, headers: { 'Content-Type': 'application/json' } }
+                )
+                console.log('GenieACS provisionOnt: setParameterValues WiFi sent for', deviceId)
+            }
+
             return true
         } catch (err) {
             console.error('GenieACS provisionOnt error:', (err as AxiosError).message)

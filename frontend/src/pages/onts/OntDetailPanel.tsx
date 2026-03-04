@@ -79,11 +79,27 @@ export default function OntDetailPanel({ ont, info, loading, onClose, onRefresh 
     }
 
     const formatUptime = (val?: string | number) => {
-        if (!val) return '—'
+        if (val === undefined || val === null || val === '') return '—'
         const sec = typeof val === 'string' ? parseInt(val) : val
-        if (isNaN(sec)) return String(val)
-        const d = Math.floor(sec / 86400), h = Math.floor((sec % 86400) / 3600), m = Math.floor((sec % 3600) / 60)
-        return [d > 0 ? `${d}h` : null, `${h}j`, `${m}m`].filter(Boolean).join(' ')
+        if (isNaN(sec) || sec <= 0) return '—'
+        const d = Math.floor(sec / 86400)
+        const h = Math.floor((sec % 86400) / 3600)
+        const m = Math.floor((sec % 3600) / 60)
+        const parts = []
+        if (d > 0) parts.push(`${d} hari`)
+        if (h > 0) parts.push(`${h} jam`)
+        parts.push(`${m} menit`)
+        return parts.join(' ')
+    }
+
+    const getSignalQuality = (rxStr?: string): { label: string; color: string } | null => {
+        if (!rxStr) return null
+        const match = rxStr.match(/(-?\d+\.?\d*)/)
+        if (!match) return null
+        const val = parseFloat(match[1])
+        if (val >= -25) return { label: 'Baik', color: '#16a34a' }
+        if (val >= -30) return { label: 'Normal', color: '#d97706' }
+        return { label: 'Lemah', color: '#dc2626' }
     }
 
     return (
@@ -243,7 +259,7 @@ export default function OntDetailPanel({ ont, info, loading, onClose, onRefresh 
                                                 { label: 'IP WAN', value: info.wanIp, mono: true },
                                                 { label: 'SSID WiFi', value: info.ssid, mono: true },
                                                 { label: 'Firmware', value: info.softwareVersion },
-                                                { label: 'Uptime', value: formatUptime(info.uptime) },
+                                                { label: 'Uptime', value: formatUptime(info.uptime) !== '—' ? formatUptime(info.uptime) : undefined },
                                                 { label: 'Last Inform', value: info.lastInform ? new Date(info.lastInform).toLocaleString('id-ID') : undefined },
                                             ].map(row => row.value ? (
                                                 <tr key={row.label} style={{ borderBottom: '1px solid var(--border)' }}>
@@ -253,6 +269,43 @@ export default function OntDetailPanel({ ont, info, loading, onClose, onRefresh 
                                                     </td>
                                                 </tr>
                                             ) : null)}
+
+                                            {/* Optical Signal (redaman) — selalu tampil */}
+                                            <tr>
+                                                <td colSpan={2} style={{ padding: '10px 0 4px', color: 'var(--text-muted)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                    📡 Sinyal Optik
+                                                </td>
+                                            </tr>
+                                            <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                                                <td style={{ padding: '8px 0', color: 'var(--text-muted)' }}>Redaman Rx</td>
+                                                <td style={{ padding: '8px 0', fontWeight: 500 }}>
+                                                    {info.opticalRx ? (
+                                                        <>
+                                                            <span style={{ fontFamily: 'monospace', fontSize: 12 }}>{info.opticalRx}</span>
+                                                            {(() => {
+                                                                const q = getSignalQuality(info.opticalRx)
+                                                                return q ? (
+                                                                    <span style={{ marginLeft: 8, fontSize: 11, color: q.color, fontWeight: 600, background: `${q.color}18`, padding: '1px 7px', borderRadius: 10 }}>
+                                                                        {q.label}
+                                                                    </span>
+                                                                ) : null
+                                                            })()}
+                                                        </>
+                                                    ) : <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>—</span>}
+                                                </td>
+                                            </tr>
+                                            <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                                                <td style={{ padding: '8px 0', color: 'var(--text-muted)' }}>Daya Tx</td>
+                                                <td style={{ padding: '8px 0', fontWeight: 500, fontFamily: info.opticalTx ? 'monospace' : undefined, fontSize: info.opticalTx ? 12 : undefined }}>
+                                                    {info.opticalTx ?? <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>—</span>}
+                                                </td>
+                                            </tr>
+                                            <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                                                <td style={{ padding: '8px 0', color: 'var(--text-muted)' }}>Suhu Modul</td>
+                                                <td style={{ padding: '8px 0', fontWeight: 500, fontFamily: info.temperature ? 'monospace' : undefined, fontSize: info.temperature ? 12 : undefined }}>
+                                                    {info.temperature ?? <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>—</span>}
+                                                </td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 )}
@@ -276,8 +329,49 @@ export default function OntDetailPanel({ ont, info, loading, onClose, onRefresh 
                                     <button className="btn btn-ghost btn-sm" style={{ justifyContent: 'flex-start' }} disabled={actionLoading !== null} onClick={() => setConfirmAction('reboot')}>
                                         <FontAwesomeIcon icon={['fas', 'rotate-right']} style={{ width: 16 }} /> Reboot ONT
                                     </button>
-                                    <button style={{ justifyContent: 'flex-start', background: 'none', color: '#dc2626', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }} disabled={actionLoading !== null} onClick={() => setConfirmAction('factory-reset')}>
-                                        <FontAwesomeIcon icon={['fas', 'triangle-exclamation']} style={{ width: 16 }} /> Factory Reset
+
+                                    {/* Factory Reset — danger card button */}
+                                    <button
+                                        disabled={actionLoading !== null}
+                                        onClick={() => setConfirmAction('factory-reset')}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', gap: 12,
+                                            background: 'linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(220,38,38,0.04) 100%)',
+                                            border: '1px solid rgba(239,68,68,0.25)',
+                                            borderRadius: 10, padding: '10px 14px',
+                                            cursor: actionLoading ? 'not-allowed' : 'pointer',
+                                            width: '100%', textAlign: 'left',
+                                            opacity: actionLoading ? 0.5 : 1,
+                                            transition: 'all 0.2s',
+                                        }}
+                                        onMouseEnter={e => {
+                                            if (!actionLoading) {
+                                                (e.currentTarget as HTMLButtonElement).style.background = 'linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(220,38,38,0.08) 100%)'
+                                                    ; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(239,68,68,0.5)'
+                                                    ; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'
+                                            }
+                                        }}
+                                        onMouseLeave={e => {
+                                            (e.currentTarget as HTMLButtonElement).style.background = 'linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(220,38,38,0.04) 100%)'
+                                                ; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(239,68,68,0.25)'
+                                                ; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'
+                                        }}
+                                    >
+                                        {/* Icon badge */}
+                                        <div style={{
+                                            width: 34, height: 34, borderRadius: 8, flexShrink: 0,
+                                            background: 'rgba(239,68,68,0.12)',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        }}>
+                                            <FontAwesomeIcon icon={['fas', 'triangle-exclamation']} style={{ color: '#dc2626', fontSize: 15 }} />
+                                        </div>
+                                        {/* Text */}
+                                        <div>
+                                            <div style={{ fontSize: 13, fontWeight: 600, color: '#dc2626' }}>Factory Reset</div>
+                                            <div style={{ fontSize: 11, color: 'rgba(220,38,38,0.7)', marginTop: 1 }}>
+                                                Hapus semua konfigurasi ONT
+                                            </div>
+                                        </div>
                                     </button>
                                 </div>
                             </>

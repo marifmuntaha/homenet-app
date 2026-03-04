@@ -12,6 +12,8 @@ import {
     updateCustomerValidator,
     changeProductValidator
 } from '#validators/customer_validator'
+import GenieAcsService from '#services/genie_acs_service'
+import CustomerOnt from '#models/customer_ont'
 
 export default class CustomersController {
     /**
@@ -283,6 +285,43 @@ Terima kasih,
             syncResults = await this.syncPPPSecretToAllDevices('update', customer.pppoeUser, customer.pppoePassword ?? undefined, productName)
         }
 
+        // Auto-push PPPoE credentials ke ONT via GenieACS
+        // Jalankan background — tidak memblokir response
+        if (customer.pppoeUser && customer.pppoePassword) {
+            const genie = new GenieAcsService()
+            const onts = await CustomerOnt.query()
+                .where('customer_id', customer.id)
+                .whereNotNull('genieacs_device_id')
+                .where('provision_status', 'provisioned')
+
+            for (const ont of onts) {
+                // Validasi format device ID (harus OUI-ProductClass-Serial, mengandung '-')
+                // Jika hanya serial number, cari device ID yang benar dari GenieACS
+                let deviceId = ont.genieacsDeviceId!
+                if (deviceId && !deviceId.includes('-') && ont.serialNumber) {
+                    const dev = await genie.getDeviceBySerial(ont.serialNumber)
+                    if (dev?._id) {
+                        deviceId = dev._id
+                        ont.genieacsDeviceId = deviceId
+                        await ont.save()
+                        console.log(`Auto-push: corrected deviceId for serial ${ont.serialNumber} → ${deviceId}`)
+                    }
+                }
+
+                genie.provisionOnt({
+                    deviceId,
+                    pppoeUser: customer.pppoeUser,
+                    pppoePassword: customer.pppoePassword,
+                    wifiSsid: ont.wifiSsid,
+                    wifiPassword: ont.wifiPassword,
+                }).then(ok => {
+                    console.log(`Auto-push ONT ${deviceId}: ${ok ? 'OK' : 'FAIL'}`)
+                }).catch(e => {
+                    console.error(`Auto-push ONT ${deviceId} error:`, e.message)
+                })
+            }
+        }
+
         return response.ok({
             success: true,
             message: 'Data pelanggan berhasil diperbarui',
@@ -349,6 +388,63 @@ Terima kasih,
             success: true,
             message: 'Produk/Langganan pelanggan berhasil diubah',
             sync: syncResults,
+        })
+    }
+
+    /**
+     * POST /customers/:id/generate-pppoe
+     * Generate kredensial PPPoE baru dan simpan ke customer.
+     */
+    async generatePppoe({ params, response }: HttpContext) {
+        const customer = await Customer.findOrFail(params.id)
+
+        const oldPppoeUser = customer.pppoeUser
+
+        // Generate new credentials (force = true agar selalu regenerate)
+        await customer.generatePppoeCredentials(true)
+        await customer.save()
+
+        // Hapus secret lama di Mikrotik jika ada
+        if (oldPppoeUser && oldPppoeUser !== customer.pppoeUser) {
+            await this.syncPPPSecretToAllDevices('delete', oldPppoeUser)
+        }
+
+        // Create/update PPPoE secret di Mikrotik
+        const activeSub = await CustomerSubscription.query()
+            .where('customer_id', customer.id)
+            .where('status', 'active')
+            .preload('product')
+            .first()
+
+        if (customer.pppoeUser) {
+            await this.syncPPPSecretToAllDevices(
+                'create',
+                customer.pppoeUser,
+                customer.pppoePassword ?? undefined,
+                activeSub?.product.name
+            )
+
+            // Auto-push ke ONT
+            const genie = new GenieAcsService()
+            const onts = await CustomerOnt.query()
+                .where('customer_id', customer.id)
+                .whereNotNull('genieacs_device_id')
+
+            for (const ont of onts) {
+                genie.provisionOnt({
+                    deviceId: ont.genieacsDeviceId!,
+                    pppoeUser: customer.pppoeUser,
+                    pppoePassword: customer.pppoePassword,
+                    wifiSsid: ont.wifiSsid,
+                    wifiPassword: ont.wifiPassword,
+                }).catch(e => console.error('Auto-push generatePppoe ONT error:', e.message))
+            }
+        }
+
+        return response.ok({
+            success: true,
+            pppoe_user: customer.pppoeUser,
+            pppoe_password: customer.pppoePassword,
         })
     }
 }

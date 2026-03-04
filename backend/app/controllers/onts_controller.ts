@@ -332,6 +332,50 @@ export default class OntsController {
     }
 
     /**
+     * POST /onts/provision/:serial/wan
+     * PUBLIC — dipanggil oleh GenieACS Extension saat provision script berjalan.
+     * Push AddObject WANPPPConnection + SetParameterValues PPPoE via NBI.
+     */
+    async provisionWan({ params, request, response }: HttpContext) {
+        const serial = params.serial?.trim()
+        const { pppoe_user, pppoe_password } = request.only(['pppoe_user', 'pppoe_password'])
+
+        if (!serial || !pppoe_user || !pppoe_password) {
+            return response.ok({ success: false, reason: 'missing_params' })
+        }
+
+        // Cari ONT dan ambil genieacs_device_id
+        const ont = await CustomerOnt.query()
+            .whereILike('serial_number', serial)
+            .first()
+
+        if (!ont) {
+            return response.ok({ success: false, reason: 'not_found' })
+        }
+
+        // Jika belum punya genieacs_device_id, coba cari dulu di GenieACS by serial
+        let deviceId = ont.genieacsDeviceId
+        if (!deviceId) {
+            const device = await this.genie.getDeviceBySerial(serial)
+            if (!device) {
+                return response.ok({ success: false, reason: 'device_not_in_genieacs' })
+            }
+            deviceId = device._id
+            ont.genieacsDeviceId = deviceId
+            await ont.save()
+        }
+
+        // Push tasks ke GenieACS: AddObject + SetParameterValues PPPoE
+        const success = await this.genie.provisionOnt({
+            deviceId,
+            pppoeUser: pppoe_user,
+            pppoePassword: pppoe_password,
+        })
+
+        return response.ok({ success, device_id: deviceId })
+    }
+
+    /**
      * POST /onts/:id/sync-provision
      * Sinkronisasi provisioning: cari device di GenieACS by serial number,
      * lalu push SetParameterValues task (PPPoE + WiFi) via NBI API.

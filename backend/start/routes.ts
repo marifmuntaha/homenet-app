@@ -111,6 +111,7 @@ router
     router.put('/customers/:id', [CustomersController, 'update'])
     router.delete('/customers/:id', [CustomersController, 'destroy'])
     router.post('/customers/:id/change-product', [CustomersController, 'changeProduct'])
+    router.post('/customers/:id/generate-pppoe', [CustomersController, 'generatePppoe'])
 
     // Dashboard
     router.get('/admin/dashboard', [AdminDashboardController, 'index'])
@@ -147,5 +148,6 @@ router.post('/api/v1/callback/midtrans', [InvoicesController, 'webhook'])
 // GenieACS ZTP Provisioning (public — dipanggil oleh GenieACS Extension)
 router.get('/onts/provision/:serial', [OntsController, 'provision'])
 router.post('/onts/provision/:serial/done', [OntsController, 'provisionDone'])
+router.post('/onts/provision/:serial/wan', [OntsController, 'provisionWan'])
 
 // trigger rebuild
