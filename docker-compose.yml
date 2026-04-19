@@ -22,6 +22,10 @@ services:
       - WHATSAPP_API_URL=${WHATSAPP_API_URL}
       - WHATSAPP_USERNAME=${WHATSAPP_USERNAME}
       - WHATSAPP_PASSWORD=${WHATSAPP_PASSWORD}
+      - TRIPAY_API_KEY=${TRIPAY_API_KEY}
+      - TRIPAY_PRIVATE_KEY=${TRIPAY_PRIVATE_KEY}
+      - TRIPAY_MERCHANT_CODE=${TRIPAY_MERCHANT_CODE}
+      - TRIPAY_IS_PRODUCTION=${TRIPAY_IS_PRODUCTION}
     command: ./docker-entrypoint.sh
     networks:
       - homenet-network
@@ -45,6 +49,8 @@ services:
 networks:
   homenet-network:
     driver: bridge
+    external: true
+    name: phpmyadmin_default
 
 volumes:
   db_data:
