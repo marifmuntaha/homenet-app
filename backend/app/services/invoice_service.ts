@@ -68,7 +68,6 @@ export default class InvoiceService {
 
         // 6. Send WhatsApp Notification
         const currencyFormatter = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 })
-        const totalStr = currencyFormatter.format(totalAmount)
         const dueDateStr = dueDate.toFormat('dd LLLL yyyy')
 
         // Construct message

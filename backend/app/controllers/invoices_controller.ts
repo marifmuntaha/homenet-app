@@ -343,7 +343,7 @@ export default class InvoicesController {
                 const voucher = await Voucher.query()
                     .where('productId', invoice.productId!)
                     .where('deviceId', invoice.deviceId!)
-                    .where('createdAt', '>=', invoice.paidAt!.toSQL())
+                    .where('createdAt', '>=', invoice.paidAt!.toSQL() ?? DateTime.now().toSQL())
                     .orderBy('createdAt', 'desc')
                     .first()
                 if (voucher) {

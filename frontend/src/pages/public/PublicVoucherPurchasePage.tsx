@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import api from '../../lib/axios'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Card, CardBody, Button, Spinner, FormGroup, Label, Input, Alert } from 'reactstrap'
-import type { Product, Device } from '../../types'
+import type { Product } from '../../types'
 
 export default function PublicVoucherPurchasePage() {
     const navigate = useNavigate()

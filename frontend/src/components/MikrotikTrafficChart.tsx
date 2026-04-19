@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
-import { Button, Alert } from 'reactstrap'
+import { Alert } from 'reactstrap'
 import api from '../lib/axios'
 import RSelect from './RSelect'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'

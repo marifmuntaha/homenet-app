@@ -1,27 +1,4 @@
 services:
-  # MariaDB Database
-  db:
-    image: mariadb:lts
-    container_name: homenet-db
-    restart: always
-    environment:
-      MYSQL_DATABASE: ${DB_DATABASE:-homenet}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-root}
-      DB_PASSWORD: ${DB_PASSWORD:-root}
-      TZ: Asia/Jakarta
-    ports:
-      - "3331:3306"
-    volumes:
-      - db_data:/var/lib/mysql
-    healthcheck:
-      test: [ "CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-root}" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - homenet-network
-
   # Backend API (Consolidated with Worker and Scheduler)
   backend:
     build:
@@ -36,10 +13,10 @@ services:
       - NODE_ENV=production
       - LOG_LEVEL=info
       - DB_CONNECTION=mysql
-      - DB_HOST=db
+      - DB_HOST=localhost
       - DB_PORT=3306
       - DB_USER=root
-      - DB_PASSWORD=${DB_PASSWORD:-root}
+      - DB_PASSWORD=myu2nnmd
       - DB_DATABASE=${DB_DATABASE:-homenet}
       - APP_KEY=${APP_KEY}
       - MIDTRANS_SERVER_KEY=${MIDTRANS_SERVER_KEY}

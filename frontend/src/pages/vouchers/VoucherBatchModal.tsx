@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react'
 import {
     Form, FormGroup, Label, Input,
-    Button, Spinner, Row, Col,
+    Button, Spinner,
 } from 'reactstrap'
 import api from '../../lib/axios'
 import type { Product, Device } from '../../types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+
+interface PaginatedResponse<T> {
+    data: { data: T[] }
+}
 
 interface VoucherBatchModalProps {
     onClose: (refresh?: boolean) => void
@@ -29,7 +33,7 @@ export default function VoucherBatchModal({ onClose }: VoucherBatchModalProps) {
                     api.get<PaginatedResponse<Product>>('/products', { params: { limit: 100 } }),
                     api.get<PaginatedResponse<Device>>('/devices', { params: { limit: 100 } })
                 ])
-                const hotspotProducts = prodRes.data.data.data.filter(p => p.category === 'hotspot')
+                const hotspotProducts = prodRes.data.data.data.filter((p: Product) => p.category === 'hotspot')
                 const deviceList = devRes.data.data.data
 
                 setProducts(hotspotProducts)
