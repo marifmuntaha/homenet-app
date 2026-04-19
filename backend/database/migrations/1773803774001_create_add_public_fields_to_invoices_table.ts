@@ -7,7 +7,7 @@ export default class extends BaseSchema {
     this.schema.alterTable(this.tableName, (table) => {
       table.integer('customer_id').unsigned().nullable().alter()
       table.enum('type', ['billing', 'voucher']).defaultTo('billing').after('customer_id')
-      table.string('whatsapp_number', 20).nullable().after('payment_token')
+      table.string('whatsapp_number', 20).nullable().after('type')
       table.integer('product_id').unsigned().nullable().references('products.id').after('whatsapp_number')
       table.integer('device_id').unsigned().nullable().references('devices.id').after('product_id')
     })
@@ -19,7 +19,9 @@ export default class extends BaseSchema {
       table.integer('customer_id').unsigned().notNullable().alter()
       table.dropColumn('type')
       table.dropColumn('whatsapp_number')
+      table.dropForeign(['product_id'])
       table.dropColumn('product_id')
+      table.dropForeign(['device_id'])
       table.dropColumn('device_id')
     })
   }

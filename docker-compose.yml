@@ -19,16 +19,10 @@ services:
       - DB_PASSWORD=myu2nnmd
       - DB_DATABASE=${DB_DATABASE:-homenet}
       - APP_KEY=${APP_KEY}
-      - MIDTRANS_SERVER_KEY=${MIDTRANS_SERVER_KEY}
-      - MIDTRANS_CLIENT_KEY=${MIDTRANS_CLIENT_KEY}
-      - MIDTRANS_IS_PRODUCTION=${MIDTRANS_IS_PRODUCTION:-false}
       - WHATSAPP_API_URL=${WHATSAPP_API_URL}
       - WHATSAPP_USERNAME=${WHATSAPP_USERNAME}
       - WHATSAPP_PASSWORD=${WHATSAPP_PASSWORD}
     command: ./docker-entrypoint.sh
-    depends_on:
-      db:
-        condition: service_healthy
     networks:
       - homenet-network
 

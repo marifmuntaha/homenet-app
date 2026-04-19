@@ -12,6 +12,7 @@ export default class extends BaseSchema {
 
   async down() {
     this.schema.alterTable(this.tableName, (table) => {
+      table.dropForeign(['odp_id'])
       table.dropColumn('odp_id')
       table.dropColumn('odp_port')
     })
