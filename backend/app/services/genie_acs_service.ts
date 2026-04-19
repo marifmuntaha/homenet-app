@@ -65,6 +65,10 @@ const PARAMS = {
         'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.RxOpticalPower',
         'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.RxPower',
         'InternetGatewayDevice.WANDevice.1.WANPONInterfaceConfig.Stats.RxPower',
+        'InternetGatewayDevice.X_ZTE_COM_Optical.RxPower',
+        'InternetGatewayDevice.X_ZTE_COM_EponStats.RxPower',
+        'InternetGatewayDevice.X_ZTE_COM_GponStats.RxPower',
+        'InternetGatewayDevice.WANDevice.1.X_CT-COM_EponInterfaceConfig.RXPower',
     ],
     OPTICAL_TX_PATHS: [
         'InternetGatewayDevice.WANDevice.1.WANEponInterfaceConfig.Stats.TxOpticalPower',
@@ -72,6 +76,10 @@ const PARAMS = {
         'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.TxOpticalPower',
         'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.TxPower',
         'InternetGatewayDevice.WANDevice.1.WANPONInterfaceConfig.Stats.TxPower',
+        'InternetGatewayDevice.X_ZTE_COM_Optical.TxPower',
+        'InternetGatewayDevice.X_ZTE_COM_EponStats.TxPower',
+        'InternetGatewayDevice.X_ZTE_COM_GponStats.TxPower',
+        'InternetGatewayDevice.WANDevice.1.X_CT-COM_EponInterfaceConfig.TXPower',
     ],
     TEMP_PATHS: [
         'InternetGatewayDevice.WANDevice.1.WANEponInterfaceConfig.Stats.OnuTemperature',
@@ -79,6 +87,11 @@ const PARAMS = {
         'InternetGatewayDevice.WANDevice.1.WANGponInterfaceConfig.Stats.OpticalTemperature',
         'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.OnuTemperature',
         'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.Temperature',
+        'InternetGatewayDevice.WANDevice.1.WANPONInterfaceConfig.Stats.Temperature',
+        'InternetGatewayDevice.X_ZTE_COM_Optical.Temperature',
+        'InternetGatewayDevice.X_ZTE_COM_EponStats.Temperature',
+        'InternetGatewayDevice.X_ZTE_COM_GponStats.Temperature',
+        'InternetGatewayDevice.WANDevice.1.X_CT-COM_EponInterfaceConfig.TransceiverTemperature',
     ],
 }
 
@@ -194,23 +207,40 @@ export default class GenieAcsService {
             : false
 
         // Format nilai optical power: GenieACS menyimpan dalam unit 0.001 dBm atau mW
-        // ZTE F609/F660 biasanya return dalam 0.01 dBm (integer, e.g. -2050 = -20.50 dBm)
-        const formatOptical = (raw?: string): string | undefined => {
-            if (!raw) return undefined
+        // ZTE F609/F660 biasanya return dalam 0.01 dBm (misal -2050 = -20.50 dBm)
+        // Jika path X_CT-COM, nilainya sering dalam 0.1 uW (misal RX: 146 -> -18.3 dBm, TX: 17660 -> 2.4 dBm)
+        const formatOptical = (raw?: string, isRx: boolean = false): string | undefined => {
+            if (raw === undefined || raw === null || raw === '') return undefined
             const num = parseFloat(raw)
             if (isNaN(num)) return raw
-            // Jika nilai absolut > 100, asumsikan unit 0.01 dBm
-            return Math.abs(num) > 100 ? (num / 100).toFixed(2) + ' dBm' : num.toFixed(2) + ' dBm'
+
+            if (!raw.includes('.')) {
+                // Heuristics unit 0.1 uW
+                // Rx power dlm uW selalu positif. Tx power dlm uW > 5000.
+                if ((isRx && num > 0) || (!isRx && num > 5000)) {
+                    // Rumus uW -> dBm: 10 * log10( val / 10000 ) (karena val adalah 0.1 uW = 10^-4 mW)
+                    return (10 * Math.log10(num / 10000)).toFixed(2) + ' dBm'
+                }
+
+                // Unit 0.01 dBm (e.g. -2150 -> -21.50)
+                return (num / 100).toFixed(2) + ' dBm'
+            }
+            return num.toFixed(2) + ' dBm'
         }
 
         const formatTemp = (raw?: string): string | undefined => {
-            if (!raw) return undefined
+            if (raw === undefined || raw === null || raw === '') return undefined
             const num = parseFloat(raw)
             if (isNaN(num)) return raw
-            // ZTE biasanya return dalam 0.1 °C atau 0.01 °C
-            // Jika > 500 asumsikan 0.01, jika 100-500 asumsikan 0.1
-            if (num > 500) return (num / 100).toFixed(1) + ' °C'
-            if (num > 100) return (num / 10).toFixed(1) + ' °C'
+
+            if (!raw.includes('.')) {
+                // Jika sangat besar (> 5000), ini format 1/256 °C (e.g. 12372 -> 48.3 °C) 
+                if (num > 5000) return (num / 256).toFixed(1) + ' °C'
+                // Jika > 500 asumsikan unit 0.01
+                if (num > 500) return (num / 100).toFixed(1) + ' °C'
+                // Jika > 100 asumsikan unit 0.1
+                if (num > 100) return (num / 10).toFixed(1) + ' °C'
+            }
             return num.toFixed(1) + ' °C'
         }
 
@@ -234,8 +264,8 @@ export default class GenieAcsService {
             wanIp: extractParam(device, PARAMS.WAN_IP),
             ssid: extractParam(device, PARAMS.WIFI_SSID),
             lastInform: device._lastInform,
-            opticalRx: formatOptical(findFirst(device, PARAMS.OPTICAL_RX_PATHS)),
-            opticalTx: formatOptical(findFirst(device, PARAMS.OPTICAL_TX_PATHS)),
+            opticalRx: formatOptical(findFirst(device, PARAMS.OPTICAL_RX_PATHS), true),
+            opticalTx: formatOptical(findFirst(device, PARAMS.OPTICAL_TX_PATHS), false),
             temperature: formatTemp(findFirst(device, PARAMS.TEMP_PATHS)),
         }
     }

@@ -103,31 +103,42 @@ log("Homenet: WAN4 Bridge (VLAN 103) + SSID2 (HOME-NET) declared");
 // ─── 5. WiFi 2.4GHz (Main SSID) ──────────────────────────────────────────────
 
 if (config.wifi_ssid && config.wifi_password) {
-    declare(
-        "InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.Enable",
-        { value: [true, "xsd:boolean"] }
-    );
-    declare(
-        "InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.SSID",
-        { value: [config.wifi_ssid, "xsd:string"] }
-    );
-    declare(
-        "InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.BeaconType",
-        { value: ["11i", "xsd:string"] }
-    );
-    declare(
-        "InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.IEEE11iEncryptionModes",
-        { value: ["AESEncryption", "xsd:string"] }
-    );
-    declare(
-        "InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.IEEE11iAuthenticationMode",
-        { value: ["PSKAuthentication", "xsd:string"] }
-    );
-    declare(
-        "InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.KeyPassphrase",
-        { value: [config.wifi_password, "xsd:string"] }
-    );
-    log("Homenet: WiFi declared SSID=" + config.wifi_ssid);
+    const wifiPass = String(config.wifi_password).trim();
+
+    // Validasi: WPA2 KeyPassphrase harus 8–63 karakter ASCII
+    const isValidPass = wifiPass.length >= 8
+        && wifiPass.length <= 63
+        && /^[\x20-\x7E]+$/.test(wifiPass); // hanya ASCII printable
+
+    if (!isValidPass) {
+        log("Homenet: WiFi password INVALID (length=" + wifiPass.length + "), skip WiFi config. Pass must be 8-63 ASCII chars.");
+    } else {
+        declare(
+            "InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.Enable",
+            { value: [true, "xsd:boolean"] }
+        );
+        declare(
+            "InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.SSID",
+            { value: [config.wifi_ssid, "xsd:string"] }
+        );
+        declare(
+            "InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.BeaconType",
+            { value: ["11i", "xsd:string"] }
+        );
+        declare(
+            "InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.IEEE11iEncryptionModes",
+            { value: ["AESEncryption", "xsd:string"] }
+        );
+        declare(
+            "InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.IEEE11iAuthenticationMode",
+            { value: ["PSKAuthentication", "xsd:string"] }
+        );
+        declare(
+            "InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.PreSharedKey.1.KeyPassphrase",
+            { value: [wifiPass, "xsd:string"] }
+        );
+        log("Homenet: WiFi declared SSID=" + config.wifi_ssid + " passLen=" + wifiPass.length);
+    }
 }
 
 // ─── 6. Lapor Selesai ────────────────────────────────────────────────────────
@@ -140,23 +151,49 @@ log("Homenet: Done serial=" + serial + " deviceId=" + genieDeviceId);
 // declare dengan { value: 1 } = GET parameter dari ONT → tersimpan di GenieACS cache
 // Coba banyak variasi nama param karena firmware ZTE F609 V9 beda-beda
 
-// Variasi 1: X_CT-COM_WANEponLinkConfig (Umum di F609/F660)
-declare("InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.RxOpticalPower", { value: 1 });
-declare("InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.TxOpticalPower", { value: 1 });
-declare("InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.OnuTemperature", { value: 1 });
-declare("InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.RxPower", { value: 1 });
-declare("InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.TxPower", { value: 1 });
-declare("InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.Temperature", { value: 1 });
+const opticPaths = [
+    // Standard and CT-COM variants (Common in ZTE/Fiberhome)
+    "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.RxOpticalPower",
+    "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.TxOpticalPower",
+    "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.OnuTemperature",
+    "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.RxPower",
+    "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.TxPower",
+    "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CT-COM_WANEponLinkConfig.Temperature",
 
-// Variasi 2: WANEponInterfaceConfig (Standar TR-069 ZTE V9)
-declare("InternetGatewayDevice.WANDevice.1.WANEponInterfaceConfig.Stats.RxOpticalPower", { value: 1 });
-declare("InternetGatewayDevice.WANDevice.1.WANEponInterfaceConfig.Stats.TxOpticalPower", { value: 1 });
-declare("InternetGatewayDevice.WANDevice.1.WANEponInterfaceConfig.Stats.OnuTemperature", { value: 1 });
-declare("InternetGatewayDevice.WANDevice.1.WANEponInterfaceConfig.Stats.Temperature", { value: 1 });
+    // WANEpon/WANGponInterfaceConfig (Standar TR-069 ZTE)
+    "InternetGatewayDevice.WANDevice.1.WANEponInterfaceConfig.Stats.RxOpticalPower",
+    "InternetGatewayDevice.WANDevice.1.WANEponInterfaceConfig.Stats.TxOpticalPower",
+    "InternetGatewayDevice.WANDevice.1.WANEponInterfaceConfig.Stats.OnuTemperature",
+    "InternetGatewayDevice.WANDevice.1.WANEponInterfaceConfig.Stats.Temperature",
+    "InternetGatewayDevice.WANDevice.1.WANGponInterfaceConfig.Stats.RxPower",
+    "InternetGatewayDevice.WANDevice.1.WANGponInterfaceConfig.Stats.TxPower",
+    "InternetGatewayDevice.WANDevice.1.WANGponInterfaceConfig.Stats.OpticalTemperature",
 
-// Variasi 3: WANPONInterfaceConfig (GPON Variant)
-declare("InternetGatewayDevice.WANDevice.1.WANPONInterfaceConfig.Stats.RxPower", { value: 1 });
-declare("InternetGatewayDevice.WANDevice.1.WANPONInterfaceConfig.Stats.TxPower", { value: 1 });
+    // WANPONInterfaceConfig (GPON Variant)
+    "InternetGatewayDevice.WANDevice.1.WANPONInterfaceConfig.Stats.RxPower",
+    "InternetGatewayDevice.WANDevice.1.WANPONInterfaceConfig.Stats.TxPower",
+    "InternetGatewayDevice.WANDevice.1.WANPONInterfaceConfig.Stats.Temperature",
+
+    // X_CT-COM_EponInterfaceConfig (Found in some F609/F660)
+    "InternetGatewayDevice.WANDevice.1.X_CT-COM_EponInterfaceConfig.RXPower",
+    "InternetGatewayDevice.WANDevice.1.X_CT-COM_EponInterfaceConfig.TXPower",
+    "InternetGatewayDevice.WANDevice.1.X_CT-COM_EponInterfaceConfig.TransceiverTemperature",
+
+    // X_ZTE_COM Extensions (Common in newer ZTE F609/F663)
+    "InternetGatewayDevice.X_ZTE_COM_Optical.RxPower",
+    "InternetGatewayDevice.X_ZTE_COM_Optical.TxPower",
+    "InternetGatewayDevice.X_ZTE_COM_Optical.Temperature",
+    "InternetGatewayDevice.X_ZTE_COM_EponStats.RxPower",
+    "InternetGatewayDevice.X_ZTE_COM_EponStats.TxPower",
+    "InternetGatewayDevice.X_ZTE_COM_EponStats.Temperature",
+    "InternetGatewayDevice.X_ZTE_COM_GponStats.RxPower",
+    "InternetGatewayDevice.X_ZTE_COM_GponStats.TxPower",
+    "InternetGatewayDevice.X_ZTE_COM_GponStats.Temperature"
+];
+
+for (const path of opticPaths) {
+    declare(path, { value: 1 });
+}
 
 declare("InternetGatewayDevice.DeviceInfo.UpTime", { value: 1 });
 

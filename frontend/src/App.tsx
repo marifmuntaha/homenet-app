@@ -12,6 +12,9 @@ import AdminDashboardPage from './pages/dashboard/AdminDashboardPage'
 import CustomerDashboardPage from './pages/customer/CustomerDashboardPage'
 import OdpsPage from './pages/odps/OdpsPage'
 import OntsPage from './pages/onts/OntsPage'
+import PublicPaymentPage from './pages/public/PublicPaymentPage'
+import VouchersPage from './pages/vouchers/VouchersPage'
+import PublicVoucherPurchasePage from './pages/public/PublicVoucherPurchasePage'
 import type { ReactNode } from 'react'
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -64,10 +67,15 @@ function AppRoutes() {
       <Route path="/invoices" element={<AdminRoute><InvoicesPage /></AdminRoute>} />
       <Route path="/odps" element={<AdminRoute><OdpsPage /></AdminRoute>} />
       <Route path="/onts" element={<AdminRoute><OntsPage /></AdminRoute>} />
+      <Route path="/vouchers" element={<AdminRoute><VouchersPage /></AdminRoute>} />
 
       {/* Customer Routes */}
       <Route path="/customer/dashboard" element={<ProtectedRoute><CustomerDashboardPage /></ProtectedRoute>} />
       <Route path="/customer/invoices" element={<ProtectedRoute><CustomerDashboardPage /></ProtectedRoute>} />
+
+      {/* Public Routes */}
+      <Route path="/pay/:token" element={<PublicPaymentPage />} />
+      <Route path="/buy-voucher" element={<PublicVoucherPurchasePage />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

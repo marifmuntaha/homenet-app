@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WiFi Hotspot Login</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="main-container">
+        <div class="login-box">
+            <!-- Radio Buttons for JS-Free Tabs -->
+            <input type="radio" name="hotspot-tabs" id="tab-login-trigger" checked />
+            <input type="radio" name="hotspot-tabs" id="tab-pemasangan-trigger" />
+
+            <div class="tabs-nav">
+                <label for="tab-login-trigger" class="tab-label label-login">Login Voucher</label>
+                <label for="tab-pemasangan-trigger" class="tab-label label-pemasangan">Pasang Baru</label>
+            </div>
+
+            <!-- Tab Content: Login -->
+            <div class="tab-content content-login">
+                <div class="header">
+                    <div class="logo">
+                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="wifi-icon"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+                    </div>
+                    <h1>WiFi Hotspot</h1>
+                    <p>Silakan masukkan kode voucher Anda</p>
+                </div>
+
+                <form name="login" action="$(link-login-only)" method="post" $(if chap-id) onSubmit="return doLogin()" $(endif)>
+                    <input type="hidden" name="dst" value="$(link-orig)" />
+                    <input type="hidden" name="popup" value="true" />
+                    
+                    <div class="input-group">
+                        <label for="username">Kode Voucher</label>
+                        <input id="username" name="username" type="text" value="$(username)" placeholder="Masukkan kode di sini..." autofocus required />
+                        <input name="password" type="hidden" value=""/>
+                    </div>
+
+                    $(if error)
+                    <div class="error-msg">
+                        $(error)
+                    </div>
+                    $(endif)
+
+                    <button type="submit" class="btn-primary">HUBUNGKAN</button>
+                </form>
+
+                <div class="divider">
+                    <span>ATAU</span>
+                </div>
+
+                <div class="buy-section">
+                    <p>Belum punya voucher?</p>
+                    <a href="https://backend-dev.own-server.web.id/buy-voucher" class="btn-outline">BELI VOUCHER ONLINE</a>
+                </div>
+
+                <div class="divider">
+                    <span>INFO</span>
+                </div>
+
+                <div class="info-section">
+                    <h3>Petunjuk Penggunaan</h3>
+                    <ul>
+                        <li>Gunakan kode voucher yang sudah Anda beli.</li>
+                        <li>Pastikan **MAC Address** perangkat Anda diatur ke **"Device MAC"** (bukan Random/Private MAC) agar koneksi tetap stabil.</li>
+                        <li>Jika terputus, silakan login kembali dengan kode yang sama.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tab Content: Pemasangan -->
+            <div class="tab-content content-pemasangan">
+                <div class="header">
+                    <div class="logo install-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    </div>
+                    <h1>Pasang Home-Net</h1>
+                    <p class="promo-badge">PROMO: Gratis Biaya Pemasangan!</p>
+                </div>
+
+                <div class="pricing-table">
+                    <div class="pricing-item">
+                        <span class="speed">10 Mbps</span>
+                        <span class="price">Rp 100.000<small>/bln</small></span>
+                    </div>
+                    <div class="pricing-item highlight">
+                        <span class="speed">20 Mbps</span>
+                        <span class="price">Rp 150.000<small>/bln</small></span>
+                    </div>
+                    <div class="pricing-item">
+                        <span class="speed">30 Mbps</span>
+                        <span class="price">Rp 200.000<small>/bln</small></span>
+                    </div>
+                </div>
+
+                <div class="cta-section">
+                    <p>Tertarik berlangganan?</p>
+                    <a href="https://wa.me/628123456789" class="btn-primary" target="_blank">DAFTAR VIA WHATSAPP</a>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p>&copy; 2026 HomeNet App. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mikrotik Login Script -->
+    $(if chap-id)
+    <form name="sendin" action="$(link-login-only)" method="post">
+        <input type="hidden" name="username" />
+        <input type="hidden" name="password" />
+        <input type="hidden" name="dst" value="$(link-orig)" />
+        <input type="hidden" name="popup" value="true" />
+    </form>
+    <script type="text/javascript" src="md5.js"></script>
+    $(endif)
+
+    <script type="text/javascript">
+    <!--
+        function doLogin() {
+        $(if chap-id)
+            document.sendin.username.value = document.login.username.value;
+            document.sendin.password.value = hexMD5('$(chap-id)' + document.login.password.value + '$(chap-challenge)');
+            document.sendin.submit();
+            return false;
+        $(else)
+            return true;
+        $(endif)
+        }
+    //-->
+    </script>
+</body>
+</html>

@@ -34,6 +34,8 @@ export interface Product {
     price: number
     downloadSpeed: number
     uploadSpeed: number
+    category: 'pppoe' | 'hotspot'
+    activePeriod: number | null
     description?: string
     createdAt: string
     updatedAt: string
@@ -41,6 +43,22 @@ export interface Product {
 
 export interface ProductSyncResult {
     [deviceId: number]: boolean
+}
+
+export interface Voucher {
+    id: number
+    code: string
+    productId: number
+    deviceId: number
+    price: number
+    status: 'available' | 'used' | 'expired'
+    isUsed: boolean
+    usedAt: string | null
+    validUntil: string | null
+    product?: Product
+    device?: Device
+    createdAt: string
+    updatedAt: string
 }
 
 export interface CustomerSubscription {

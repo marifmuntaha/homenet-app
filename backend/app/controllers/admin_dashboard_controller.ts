@@ -98,7 +98,7 @@ export default class AdminDashboardController {
                 .reduce((acc, curr) => acc + Number(curr.totalAmount), 0)
 
             const onlineAmount = monthInvoices
-                .filter(inv => inv.paymentType === 'midtrans' || !inv.paymentType) // default non-cash to online for safety, or just midtrans
+                .filter(inv => inv.paymentType === 'tripay' || !inv.paymentType) // default non-cash to online for safety, or just tripay
                 .reduce((acc, curr) => acc + Number(curr.totalAmount), 0)
 
             // Also adding invoices that don't have a specific paymentType (legacy data) to cash for now

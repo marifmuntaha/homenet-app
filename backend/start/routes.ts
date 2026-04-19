@@ -20,6 +20,8 @@ const CustomerDashboardController = () => import('#controllers/customer_dashboar
 const AdminDashboardController = () => import('#controllers/admin_dashboard_controller')
 const OdpsController = () => import('#controllers/odps_controller')
 const OntsController = () => import('#controllers/onts_controller')
+const VouchersController = () => import('#controllers/vouchers_controller')
+const PublicVouchersController = () => import('#controllers/public_vouchers_controller')
 
 /*
 |--------------------------------------------------------------------------
@@ -104,6 +106,12 @@ router
     router.delete('/products/:id', [ProductsController, 'destroy'])
     router.post('/products/:id/sync', [ProductsController, 'sync'])
 
+    // Vouchers
+    router.get('/vouchers', [VouchersController, 'index'])
+    router.post('/vouchers/generate', [VouchersController, 'generate'])
+    router.get('/vouchers/stats', [VouchersController, 'stats'])
+    router.delete('/vouchers/:id', [VouchersController, 'destroy'])
+
     // Customers CRUD & Subscription
     router.get('/customers/active-pppoe', [CustomersController, 'activePppoe'])
     router.get('/customers', [CustomersController, 'index'])
@@ -132,7 +140,8 @@ router
 
 router
   .group(() => {
-    router.post('/invoices/:id/pay', [InvoicesController, 'createPayment'])
+    router.get('/tripay/channels', [InvoicesController, 'getTripayChannels'])
+    router.post('/invoices/:id/pay-tripay', [InvoicesController, 'createTripayPayment'])
   })
   .use(middleware.auth())
 
@@ -143,7 +152,23 @@ router
   })
   .use(middleware.auth())
 
-router.post('/api/v1/callback/midtrans', [InvoicesController, 'webhook'])
+router.post('/callback/tripay', [InvoicesController, 'tripayWebhook'])
+
+// Public payment routes
+router.get('/public/invoices/:token', [InvoicesController, 'showPublic'])
+router.get('/public/tripay/channels', [InvoicesController, 'getTripayChannels'])
+router.post('/public/invoices/:token/pay', [InvoicesController, 'createTripayPaymentPublic'])
+
+// Public Voucher Purchase
+router
+  .group(() => {
+    router.get('/voucher-products', [PublicVouchersController, 'products'])
+    router.get('/voucher-routers', [PublicVouchersController, 'devices'])
+    router.post('/buy-voucher', [PublicVouchersController, 'purchase'])
+    router.post('/hotspot/activate', [PublicVouchersController, 'activate'])
+  })
+  .prefix('/public')
+
 
 // GenieACS ZTP Provisioning (public — dipanggil oleh GenieACS Extension)
 router.get('/onts/provision/:serial', [OntsController, 'provision'])

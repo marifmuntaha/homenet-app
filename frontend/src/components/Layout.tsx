@@ -1,5 +1,6 @@
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
 import api from '../lib/axios'
 import type { ReactNode } from 'react'
 import { useState, useEffect } from 'react'
@@ -12,6 +13,7 @@ interface LayoutProps {
 
 export default function Layout({ children, title }: LayoutProps) {
     const { user, logout } = useAuth()
+    const { theme, toggleTheme } = useTheme()
     const navigate = useNavigate()
     const location = useLocation()
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -138,6 +140,15 @@ export default function Layout({ children, title }: LayoutProps) {
                                 </span>
                                 Tagihan
                             </NavLink>
+                            <NavLink
+                                to="/vouchers"
+                                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                            >
+                                <span className="nav-icon fa-icon-nav">
+                                    <FontAwesomeIcon icon={['fas', 'ticket']} />
+                                </span>
+                                Voucher Hotspot
+                            </NavLink>
                         </>
                     ) : (
                         <>
@@ -194,21 +205,30 @@ export default function Layout({ children, title }: LayoutProps) {
                         <h2 className="topbar-title">{title}</h2>
                     </div>
 
-                    <div className="topbar-clock">
-                        <div className="clock-date">
-                            {currentTime.toLocaleDateString('id-ID', {
-                                weekday: 'long',
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric'
-                            })}
-                        </div>
-                        <div className="clock-time">
-                            {currentTime.toLocaleTimeString('id-ID', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                second: '2-digit'
-                            })}
+                    <div className="topbar-right">
+                        <button
+                            className="theme-toggle"
+                            onClick={toggleTheme}
+                            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                        >
+                            <FontAwesomeIcon icon={['fas', theme === 'dark' ? 'sun' : 'moon']} />
+                        </button>
+                        <div className="topbar-clock">
+                            <div className="clock-date">
+                                {currentTime.toLocaleDateString('id-ID', {
+                                    weekday: 'long',
+                                    day: 'numeric',
+                                    month: 'long',
+                                    year: 'numeric'
+                                })}
+                            </div>
+                            <div className="clock-time">
+                                {currentTime.toLocaleTimeString('id-ID', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit'
+                                })}
+                            </div>
                         </div>
                     </div>
                 </header>

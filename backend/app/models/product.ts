@@ -20,6 +20,12 @@ export default class Product extends BaseModel {
     @column()
     declare description: string | null
 
+    @column()
+    declare category: 'pppoe' | 'hotspot'
+
+    @column()
+    declare activePeriod: number | null
+
     @column.dateTime({ autoCreate: true })
     declare createdAt: DateTime
 

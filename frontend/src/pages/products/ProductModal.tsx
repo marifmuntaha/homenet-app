@@ -17,12 +17,14 @@ interface FormData {
     price: string
     downloadSpeed: string
     uploadSpeed: string
+    category: 'pppoe' | 'hotspot'
+    activePeriod: string
     description: string
 }
 
 export default function ProductModal({ product, onClose }: ProductModalProps) {
     const isEdit = !!product
-    const [form, setForm] = useState<FormData>({ name: '', price: '', downloadSpeed: '', uploadSpeed: '', description: '' })
+    const [form, setForm] = useState<FormData>({ name: '', price: '', downloadSpeed: '', uploadSpeed: '', category: 'pppoe', activePeriod: '30', description: '' })
     const [errors, setErrors] = useState<Partial<FormData>>({})
     const [isLoading, setIsLoading] = useState(false)
 
@@ -33,10 +35,12 @@ export default function ProductModal({ product, onClose }: ProductModalProps) {
                 price: String(product.price),
                 downloadSpeed: String(product.downloadSpeed),
                 uploadSpeed: String(product.uploadSpeed),
+                category: product.category || 'pppoe',
+                activePeriod: String(product.activePeriod || '30'),
                 description: product.description || '',
             })
         } else {
-            setForm({ name: '', price: '', downloadSpeed: '', uploadSpeed: '', description: '' })
+            setForm({ name: '', price: '', downloadSpeed: '', uploadSpeed: '', category: 'pppoe', activePeriod: '30', description: '' })
             setErrors({})
         }
     }, [product])
@@ -64,6 +68,8 @@ export default function ProductModal({ product, onClose }: ProductModalProps) {
                 price: Number(form.price),
                 downloadSpeed: Number(form.downloadSpeed),
                 uploadSpeed: Number(form.uploadSpeed),
+                category: form.category,
+                activePeriod: form.category === 'hotspot' ? Number(form.activePeriod) : null,
                 description: form.description.trim() || null,
             }
             if (isEdit) {
@@ -114,6 +120,55 @@ export default function ProductModal({ product, onClose }: ProductModalProps) {
                             />
                             <FormFeedback>{errors.name}</FormFeedback>
                         </FormGroup>
+
+                        <FormGroup>
+                            <Label className="form-label">
+                                Kategori Produk <span style={{ color: 'var(--danger)' }}>*</span>
+                            </Label>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <div 
+                                    onClick={() => setForm(p => ({ ...p, category: 'pppoe' }))}
+                                    style={{ 
+                                        flex: 1, padding: '12px', borderRadius: '12px', border: '2px solid',
+                                        borderColor: form.category === 'pppoe' ? '#10b981' : 'var(--border)',
+                                        background: form.category === 'pppoe' ? 'rgba(16, 185, 129, 0.05)' : 'transparent',
+                                        cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s'
+                                    }}
+                                >
+                                    <FontAwesomeIcon icon={['fas', 'network-wired']} style={{ marginBottom: 4, display: 'block', margin: '0 auto', color: form.category === 'pppoe' ? '#10b981' : 'var(--text-muted)' }} />
+                                    <span style={{ fontSize: '13px', fontWeight: 600 }}>PPPoE Home</span>
+                                </div>
+                                <div 
+                                    onClick={() => setForm(p => ({ ...p, category: 'hotspot' }))}
+                                    style={{ 
+                                        flex: 1, padding: '12px', borderRadius: '12px', border: '2px solid',
+                                        borderColor: form.category === 'hotspot' ? '#f59e0b' : 'var(--border)',
+                                        background: form.category === 'hotspot' ? 'rgba(245, 158, 11, 0.05)' : 'transparent',
+                                        cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s'
+                                    }}
+                                >
+                                    <FontAwesomeIcon icon={['fas', 'wifi']} style={{ marginBottom: 4, display: 'block', margin: '0 auto', color: form.category === 'hotspot' ? '#f59e0b' : 'var(--text-muted)' }} />
+                                    <span style={{ fontSize: '13px', fontWeight: 600 }}>Hotspot Voucher</span>
+                                </div>
+                            </div>
+                        </FormGroup>
+
+                        {form.category === 'hotspot' && (
+                            <FormGroup>
+                                <Label className="form-label">
+                                    Masa Aktif (Hari) <span style={{ color: 'var(--danger)' }}>*</span>
+                                </Label>
+                                <Input
+                                    type="number"
+                                    className="form-input"
+                                    placeholder="Contoh: 30"
+                                    value={form.activePeriod}
+                                    onChange={(e) => setForm({ ...form, activePeriod: e.target.value })}
+                                    required
+                                />
+                                <small className="text-muted">Lama voucher berlaku setelah di-generate/digunakan.</small>
+                            </FormGroup>
+                        )}
 
                         <FormGroup>
                             <Label className="form-label">
@@ -184,7 +239,7 @@ export default function ProductModal({ product, onClose }: ProductModalProps) {
                         <div style={{ marginTop: 8, padding: '10px 14px', background: 'rgba(56, 189, 248, 0.08)', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
                             <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                                 <FontAwesomeIcon icon={['fas', 'circle-info']} style={{ marginTop: 2, color: '#38bdf8', flexShrink: 0 }} />
-                                <span>Menyimpan produk ini akan otomatis mengubah PPP Profile di <strong>semua Router Mikrotik</strong> yang terdaftar.</span>
+                                <span>Menyimpan produk ini akan otomatis mengubah <strong>{form.category === 'pppoe' ? 'PPP Profile' : 'Hotspot User Profile'}</strong> di <strong>semua Router Mikrotik</strong> yang terdaftar.</span>
                             </p>
                         </div>
                     </div>

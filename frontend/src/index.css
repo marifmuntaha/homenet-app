@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-:root {
+:root,
+[data-theme="dark"] {
   --bg-primary: #0a0b0f;
   --bg-secondary: #111318;
   --bg-card: #16181f;
@@ -25,7 +26,7 @@
   --text-muted: #64748b;
 
   --sidebar-width: 260px;
-  --header-height: 64px;
+  --header-height: 72px;
   --radius: 12px;
   --radius-sm: 8px;
   --radius-lg: 16px;
@@ -45,6 +46,43 @@
   --bs-warning-rgb: 245, 158, 11;
   --control-height: 40px;
 }
+
+/* ============================
+   LIGHT THEME
+============================= */
+[data-theme="light"] {
+  --bg-primary: #f0f2f7;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-hover: #f1f3f9;
+  --border: #dde1ee;
+  --border-light: #c9d0e4;
+
+  --accent: #6366f1;
+  --accent-hover: #4f52d8;
+  --accent-light: rgba(99, 102, 241, 0.10);
+  --accent-glow: rgba(99, 102, 241, 0.2);
+
+  --success: #16a34a;
+  --success-light: rgba(22, 163, 74, 0.10);
+  --danger: #dc2626;
+  --danger-light: rgba(220, 38, 38, 0.10);
+  --warning: #d97706;
+  --warning-light: rgba(217, 119, 6, 0.10);
+
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 48px rgba(0, 0, 0, 0.12);
+
+  /* Bootstrap overrides */
+  --bs-body-bg: var(--bg-primary);
+  --bs-body-color: var(--text-primary);
+  --bs-border-color: var(--border);
+}
+
 
 /* ============================
    BOOTSTRAP DARK THEME OVERRIDES
@@ -687,16 +725,20 @@ body,
 }
 
 .topbar {
-  height: var(--header-height);
+  height: var(--header-height) !important;
+  min-height: var(--header-height) !important;
+  max-height: var(--header-height) !important;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: space-between;
   padding: 0 28px;
   position: sticky;
   top: 0;
   z-index: 50;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .topbar-left {
@@ -711,6 +753,36 @@ body,
   flex-direction: column;
   justify-content: center;
 }
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  background: var(--accent-light);
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: rotate(20deg);
+}
+
 
 .clock-date {
   font-size: 11px;

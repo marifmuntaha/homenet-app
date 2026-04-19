@@ -37,13 +37,15 @@ export default await Env.create(new URL('../', import.meta.url), {
   WHATSAPP_API_URL: Env.schema.string({ format: 'url' }),
   WHATSAPP_USERNAME: Env.schema.string(),
   WHATSAPP_PASSWORD: Env.schema.string(),
+  WHATSAPP_DEVICE_ID: Env.schema.string.optional(),
 
   /*
   |----------------------------------------------------------
-  | Variables for Midtrans
+  | Variables for Tripay
   |----------------------------------------------------------
   */
-  MIDTRANS_SERVER_KEY: Env.schema.string(),
-  MIDTRANS_CLIENT_KEY: Env.schema.string(),
-  MIDTRANS_IS_PRODUCTION: Env.schema.boolean(),
+  TRIPAY_API_KEY: Env.schema.string(),
+  TRIPAY_PRIVATE_KEY: Env.schema.string(),
+  TRIPAY_MERCHANT_CODE: Env.schema.string(),
+  TRIPAY_IS_PRODUCTION: Env.schema.boolean(),
 })

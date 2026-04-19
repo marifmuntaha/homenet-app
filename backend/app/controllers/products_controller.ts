@@ -36,6 +36,7 @@ export default class ProductsController {
     private async syncToAllDevices(
         action: 'create' | 'update' | 'delete',
         name: string,
+        category: 'pppoe' | 'hotspot',
         downloadSpeed?: number,
         uploadSpeed?: number
     ) {
@@ -47,16 +48,28 @@ export default class ProductsController {
                 const svc = MikrotikService.fromDevice(device)
                 let success = false
                 try {
-                    if (action === 'create' && downloadSpeed && uploadSpeed) {
-                        success = await svc.createPPPProfile(name, downloadSpeed, uploadSpeed)
-                        if (!success) {
-                            // fallback try update if already exists
+                    if (category === 'pppoe') {
+                        if (action === 'create' && downloadSpeed && uploadSpeed) {
+                            success = await svc.createPPPProfile(name, downloadSpeed, uploadSpeed)
+                            if (!success) {
+                                success = await svc.updatePPPProfile(name, downloadSpeed, uploadSpeed)
+                            }
+                        } else if (action === 'update' && downloadSpeed && uploadSpeed) {
                             success = await svc.updatePPPProfile(name, downloadSpeed, uploadSpeed)
+                        } else if (action === 'delete') {
+                            success = await svc.deletePPPProfile(name)
                         }
-                    } else if (action === 'update' && downloadSpeed && uploadSpeed) {
-                        success = await svc.updatePPPProfile(name, downloadSpeed, uploadSpeed)
-                    } else if (action === 'delete') {
-                        success = await svc.deletePPPProfile(name)
+                    } else if (category === 'hotspot') {
+                        if (action === 'create' && downloadSpeed && uploadSpeed) {
+                            success = await svc.createHotspotProfile(name, downloadSpeed, uploadSpeed)
+                            if (!success) {
+                                success = await svc.updateHotspotProfile(name, downloadSpeed, uploadSpeed)
+                            }
+                        } else if (action === 'update' && downloadSpeed && uploadSpeed) {
+                            success = await svc.updateHotspotProfile(name, downloadSpeed, uploadSpeed)
+                        } else if (action === 'delete') {
+                            success = await svc.deleteHotspotProfile(name)
+                        }
                     }
                 } catch {
                     success = false
@@ -86,7 +99,7 @@ export default class ProductsController {
         const product = await Product.create(data)
 
         // Sync to Mikrotik
-        const syncResults = await this.syncToAllDevices('create', product.name, product.downloadSpeed, product.uploadSpeed)
+        const syncResults = await this.syncToAllDevices('create', product.name, product.category, product.downloadSpeed, product.uploadSpeed)
 
         return response.created({
             success: true,
@@ -125,11 +138,11 @@ export default class ProductsController {
         let syncResults = {}
         if (oldName !== product.name) {
             // Name changed, delete old profile and create new one
-            await this.syncToAllDevices('delete', oldName)
-            syncResults = await this.syncToAllDevices('create', product.name, product.downloadSpeed, product.uploadSpeed)
+            await this.syncToAllDevices('delete', oldName, product.category)
+            syncResults = await this.syncToAllDevices('create', product.name, product.category, product.downloadSpeed, product.uploadSpeed)
         } else {
             // Just update existing profile
-            syncResults = await this.syncToAllDevices('update', product.name, product.downloadSpeed, product.uploadSpeed)
+            syncResults = await this.syncToAllDevices('update', product.name, product.category, product.downloadSpeed, product.uploadSpeed)
         }
 
         return response.ok({
@@ -146,7 +159,7 @@ export default class ProductsController {
      */
     async destroy({ params, response }: HttpContext) {
         const product = await Product.findOrFail(params.id)
-        const syncResults = await this.syncToAllDevices('delete', product.name)
+        const syncResults = await this.syncToAllDevices('delete', product.name, product.category)
         await product.delete()
 
         return response.ok({
@@ -162,7 +175,7 @@ export default class ProductsController {
      */
     async sync({ params, response }: HttpContext) {
         const product = await Product.findOrFail(params.id)
-        const syncResults = await this.syncToAllDevices('update', product.name, product.downloadSpeed, product.uploadSpeed)
+        const syncResults = await this.syncToAllDevices('update', product.name, product.category, product.downloadSpeed, product.uploadSpeed)
 
         const successCount = Object.values(syncResults).filter(Boolean).length
         const totalCount = Object.keys(syncResults).length

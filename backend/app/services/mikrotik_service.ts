@@ -336,6 +336,163 @@ export default class MikrotikService {
         }
     }
 
+    /* ─── HOTSPOT USER PROFILE METHODS ──────────────────────────── */
+
+    /**
+     * Find Hotspot User Profile by name
+     */
+    async findHotspotProfile(name: string): Promise<any> {
+        try {
+            const res = await axios.get(`${this.baseUrl}/ip/hotspot/user/profile?name=${encodeURIComponent(name)}`, {
+                auth: this.auth,
+                timeout: this.timeout,
+            })
+            if (Array.isArray(res.data) && res.data.length > 0) {
+                return res.data[0]
+            }
+            return null
+        } catch {
+            return null
+        }
+    }
+
+    /**
+     * Create Hotspot User Profile
+     */
+    async createHotspotProfile(name: string, downloadMbps: number, uploadMbps: number): Promise<boolean> {
+        try {
+            await axios.put(`${this.baseUrl}/ip/hotspot/user/profile`, {
+                name,
+                'rate-limit': this.formatRateLimit(downloadMbps, uploadMbps),
+                'shared-users': '1', // Default to 1 user per voucher
+                'status-autorefresh': '1m'
+            }, {
+                auth: this.auth,
+                timeout: this.timeout,
+            })
+            return true
+        } catch (error: any) {
+            console.error(`Mikrotik createHotspotProfile error [${name}]:`, error.response?.data || error.message)
+            return false
+        }
+    }
+
+    /**
+     * Update existing Hotspot User Profile
+     */
+    async updateHotspotProfile(name: string, downloadMbps: number, uploadMbps: number): Promise<boolean> {
+        try {
+            const profile = await this.findHotspotProfile(name)
+            if (!profile || !profile['.id']) {
+                return await this.createHotspotProfile(name, downloadMbps, uploadMbps)
+            }
+
+            await axios.patch(`${this.baseUrl}/ip/hotspot/user/profile/${encodeURIComponent(profile['.id'])}`, {
+                'rate-limit': this.formatRateLimit(downloadMbps, uploadMbps)
+            }, {
+                auth: this.auth,
+                timeout: this.timeout,
+            })
+            return true
+        } catch (error: any) {
+            console.error(`Mikrotik updateHotspotProfile error [${name}]:`, error.response?.data || error.message)
+            return false
+        }
+    }
+
+    /**
+     * Delete Hotspot User Profile
+     */
+    async deleteHotspotProfile(name: string): Promise<boolean> {
+        try {
+            const profile = await this.findHotspotProfile(name)
+            if (!profile || !profile['.id']) return true
+
+            await axios.delete(`${this.baseUrl}/ip/hotspot/user/profile/${encodeURIComponent(profile['.id'])}`, {
+                auth: this.auth,
+                timeout: this.timeout,
+            })
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /* ─── HOTSPOT USER METHODS ──────────────────────────────────── */
+
+    /**
+     * Find Hotspot User by name/code
+     */
+    async findHotspotUser(name: string): Promise<any> {
+        try {
+            const res = await axios.get(`${this.baseUrl}/ip/hotspot/user?name=${encodeURIComponent(name)}`, {
+                auth: this.auth,
+                timeout: this.timeout,
+            })
+            if (Array.isArray(res.data) && res.data.length > 0) {
+                return res.data[0]
+            }
+            return null
+        } catch {
+            return null
+        }
+    }
+
+    /**
+     * Create Hotspot User (Voucher)
+     */
+    async createHotspotUser(name: string, password?: string, profileName?: string, comment?: string, onLogin?: string): Promise<boolean> {
+        try {
+            const payload: any = { name }
+            if (password) payload.password = password
+            if (profileName) payload.profile = profileName
+            if (comment) payload.comment = comment
+            if (onLogin) payload['on-login'] = onLogin
+
+            await axios.put(`${this.baseUrl}/ip/hotspot/user`, payload, {
+                auth: this.auth,
+                timeout: this.timeout,
+            })
+            return true
+        } catch (error: any) {
+            console.error(`Mikrotik createHotspotUser error [${name}]:`, error.response?.data || error.message)
+            return false
+        }
+    }
+
+    /**
+     * Delete Hotspot User
+     */
+    async deleteHotspotUser(name: string): Promise<boolean> {
+        try {
+            const user = await this.findHotspotUser(name)
+            if (!user || !user['.id']) return true
+
+            await axios.delete(`${this.baseUrl}/ip/hotspot/user/${encodeURIComponent(user['.id'])}`, {
+                auth: this.auth,
+                timeout: this.timeout,
+            })
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /**
+     * Get active hotspot hosts
+     */
+    async getActiveHotspotHosts(): Promise<any[]> {
+        try {
+            const res = await axios.get(`${this.baseUrl}/ip/hotspot/host`, {
+                auth: this.auth,
+                timeout: this.timeout,
+            })
+            return Array.isArray(res.data) ? res.data : []
+        } catch {
+            return []
+        }
+    }
+
     /* ─── INTERFACE TRAFFIC ───────────────────────────────────────── */
 
     /**

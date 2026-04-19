@@ -124,6 +124,8 @@ export default function ProductsPage() {
                                 <tr>
                                     <th>#</th>
                                     <th>Nama Produk / Profil</th>
+                                    <th>Kategori</th>
+                                    <th>Masa Aktif</th>
                                     <th>Kecepatan (DL/UL)</th>
                                     <th>Harga</th>
                                     <th>Router Sync</th>
@@ -152,6 +154,31 @@ export default function ProductsPage() {
                                             </div>
                                         </td>
                                         <td>
+                                            <span 
+                                                className={`badge ${product.category === 'hotspot' ? 'badge-warning' : 'badge-success'}`} 
+                                                style={{ 
+                                                    textTransform: 'uppercase', fontSize: '10px', letterSpacing: '0.5px',
+                                                    background: product.category === 'hotspot' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                                                    color: product.category === 'hotspot' ? '#d97706' : '#059669',
+                                                    border: '1px solid currentColor',
+                                                    padding: '4px 8px',
+                                                    borderRadius: '6px'
+                                                }}
+                                            >
+                                                <FontAwesomeIcon icon={['fas', product.category === 'hotspot' ? 'wifi' : 'network-wired']} style={{ marginRight: '4px' }} />
+                                                {product.category}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {product.category === 'hotspot' ? (
+                                                <span style={{ fontSize: '14px', fontWeight: 600 }}>
+                                                    {product.activePeriod || 0} Hari
+                                                </span>
+                                            ) : (
+                                                <span className="text-muted" style={{ fontSize: '13px' }}>-</span>
+                                            )}
+                                        </td>
+                                        <td>
                                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                                 <span className="badge badge-verified" style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#0ea5e9' }}>
                                                     <FontAwesomeIcon icon={['fas', 'arrow-down']} /> {product.downloadSpeed} Mbps
@@ -171,7 +198,7 @@ export default function ProductsPage() {
                                                 className="btn btn-ghost btn-sm"
                                                 onClick={() => handleSyncManual(product)}
                                                 disabled={syncingId === product.id}
-                                                title="Paksa sinkronisasi PPP Profile ke semua router"
+                                                title={`Paksa sinkronisasi ${product.category === 'pppoe' ? 'PPP Profile' : 'Hotspot Profile'} ke semua router`}
                                             >
                                                 {syncingId === product.id ? <span className="spinner" style={{ width: 14, height: 14 }} /> : <FontAwesomeIcon icon={['fas', 'arrows-rotate']} />} Force Sync
                                             </button>

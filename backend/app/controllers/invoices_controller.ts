@@ -3,9 +3,11 @@ import WhatsappService from '#services/whatsapp_service'
 import Invoice from '#models/invoice'
 import User from '#models/user'
 import Customer from '#models/customer'
+import Voucher from '#models/voucher'
 import InvoiceService from '#services/invoice_service'
-import MidtransService from '#services/midtrans_service'
 import CustomerService from '#services/customer_service'
+import TripayService from '#services/tripay_service'
+import HotspotService from '#services/hotspot_service'
 import { DateTime } from 'luxon'
 
 export default class InvoicesController {
@@ -13,6 +15,7 @@ export default class InvoicesController {
      * List invoices
      */
     async index({ request, response }: HttpContext) {
+        // ... (existing index logic)
         const page = request.input('page', 1)
         const limit = request.input('limit', 10)
         const status = request.input('status')
@@ -148,10 +151,30 @@ export default class InvoicesController {
     }
 
     /**
-     * Create Midtrans Payment
+     * Get Tripay Payment Channels
      */
-    async createPayment({ auth, params, response }: HttpContext) {
+    async getTripayChannels({ response }: HttpContext) {
+        try {
+            const channels = await TripayService.getPaymentChannels()
+            return response.ok({
+                success: true,
+                data: channels
+            })
+        } catch (error: any) {
+            return response.internalServerError({
+                success: false,
+                message: error.message
+            })
+        }
+    }
+
+    /**
+     * Create Tripay Payment
+     */
+    async createTripayPayment({ auth, params, request, response }: HttpContext) {
         const user = auth.user!
+        const method = request.input('method', 'BRIVA') // Default method
+
         const invoice = await Invoice.query()
             .where('id', params.id)
             .preload('customer')
@@ -181,16 +204,15 @@ export default class InvoicesController {
         }
 
         try {
-            const transaction = await MidtransService.createTransaction(invoice)
+            const data = await TripayService.createTransaction(invoice, method)
             return response.ok({
                 success: true,
-                data: transaction
+                data: data
             })
         } catch (error: any) {
-            console.error('Midtrans creation error:', error)
             return response.badRequest({
                 success: false,
-                message: 'Gagal membuat transaksi: ' + error.message
+                message: error.message
             })
         }
     }
@@ -250,13 +272,133 @@ export default class InvoicesController {
     }
 
     /**
-     * Midtrans Webhook
+     * Tripay Webhook
      */
-    async webhook({ request, response }: HttpContext) {
-        const payload = request.body()
+    async tripayWebhook({ request, response }: HttpContext) {
+        const rawBody = request.raw()
+        const signature = request.header('X-Callback-Signature')
+
+        if (!signature || !TripayService.validateSignature(rawBody || '', signature)) {
+            return response.forbidden({ success: false, message: 'Invalid signature' })
+        }
+
+        const payload = JSON.parse(rawBody || '{}')
+
+        const { merchant_ref, status } = payload
+
+        if (status === 'PAID') {
+            // Find invoice by Tripay reference OR merchant_ref (ID is inside merchant_ref)
+            // merchant_ref format: INV-{id}-{timestamp}
+            const invoiceId = merchant_ref.split('-')[1]
+            const invoice = await Invoice.find(invoiceId)
+
+            if (invoice && invoice.status !== 'paid') {
+                invoice.status = 'paid'
+                invoice.paidAt = DateTime.now()
+                invoice.paymentMethod = payload.payment_method
+                await invoice.save()
+
+                if (invoice.type === 'voucher' && invoice.productId && invoice.deviceId) {
+                    // Generate Voucher
+                    const hotspotService = new HotspotService()
+                    const result = await hotspotService.generateBatch(invoice.productId, invoice.deviceId, 1)
+                    
+                    if (result.vouchers.length > 0 && invoice.whatsappNumber) {
+                        const voucher = result.vouchers[0]
+                        const product = await invoice.related('product').query().first()
+                        
+                        const message = `Terima kasih! Pembayaran *${product?.name || 'Voucher'}* berhasil.\n\nKode Voucher Anda:\n*${voucher.code}*\n\nSilakan masukkan kode tersebut di halaman login Hotspot kami.\n_Homenet Team_`
+                        await WhatsappService.sendMessage(invoice.whatsappNumber, message)
+                    }
+                } else if (invoice.type === 'billing') {
+                    // Restore service for billing
+                    try {
+                        const customer = await invoice.related('customer').query().first()
+                        if (customer) {
+                            await CustomerService.restoreCustomerService(customer)
+                        }
+                    } catch (err: any) {
+                        console.error('[Tripay Webhook] Restore service error:', err.message)
+                    }
+                }
+            }
+        }
+
+        return response.ok({ success: true })
+    }
+
+    /**
+     * GET /public/invoices/:token
+     */
+    async showPublic({ params, response }: HttpContext) {
         try {
-            await MidtransService.handleNotification(payload)
-            return response.ok({ success: true })
+            const invoice = await Invoice.query()
+                .where('paymentToken', params.token)
+                .preload('customer')
+                .preload('product')
+                .firstOrFail()
+            
+            let voucherCode: string | null = null
+            if (invoice.type === 'voucher' && invoice.status === 'paid') {
+                const voucher = await Voucher.query()
+                    .where('productId', invoice.productId!)
+                    .where('deviceId', invoice.deviceId!)
+                    .where('createdAt', '>=', invoice.paidAt!.toSQL())
+                    .orderBy('createdAt', 'desc')
+                    .first()
+                if (voucher) {
+                    voucherCode = voucher.code
+                }
+            }
+
+            return response.ok({
+                success: true,
+                data: {
+                    id: invoice.id,
+                    type: invoice.type,
+                    month: invoice.month,
+                    amount: invoice.amount,
+                    previous_balance: invoice.previousBalance,
+                    total_amount: invoice.totalAmount,
+                    status: invoice.status,
+                    due_date: invoice.dueDate,
+                    customer_name: invoice.fullName || invoice.customer?.fullName || 'Pembeli Voucher',
+                    customer_email: invoice.customer?.user?.email || (invoice.whatsappNumber ? `${invoice.whatsappNumber}@homenet.id` : 'pembeli@homenet.id'),
+                    customer_phone: invoice.customer?.phone || invoice.whatsappNumber || '',
+                    product_name: invoice.product?.name,
+                    voucher_code: voucherCode,
+                    payment_token: invoice.paymentToken
+                }
+            })
+        } catch (error) {
+            return response.notFound({ success: false, message: 'Tagihan tidak ditemukan' })
+        }
+    }
+
+    /**
+     * POST /public/invoices/:token/pay
+     */
+    async createTripayPaymentPublic({ params, request, response }: HttpContext) {
+        const method = request.input('method', 'BRIVA')
+
+        try {
+            const invoice = await Invoice.query()
+                .where('paymentToken', params.token)
+                .preload('customer')
+                .firstOrFail()
+
+            if (invoice.status === 'paid') {
+                return response.badRequest({
+                    success: false,
+                    message: 'Tagihan sudah dibayar'
+                })
+            }
+
+            const data = await TripayService.createTransaction(invoice, method)
+            return response.ok({
+                success: true,
+                data: data
+            })
         } catch (error: any) {
             return response.badRequest({
                 success: false,

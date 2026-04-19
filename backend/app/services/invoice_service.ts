@@ -3,9 +3,10 @@ import Invoice from '#models/invoice'
 import Customer from '#models/customer'
 import { DateTime } from 'luxon'
 import logger from '@adonisjs/core/services/logger'
-import MidtransService from '#services/midtrans_service'
 import WhatsappService from '#services/whatsapp_service'
 import CustomerService from '#services/customer_service'
+import env from '#start/env'
+import crypto from 'node:crypto'
 
 export default class InvoiceService {
     /**
@@ -57,20 +58,13 @@ export default class InvoiceService {
             previousBalance: previousBalance,
             totalAmount: totalAmount,
             status: 'unpaid',
-            dueDate: dueDate
+            dueDate: dueDate,
+            paymentToken: crypto.randomBytes(32).toString('hex')
         })
 
-        // 5. Integrate Midtrans (Generate Snap Token)
-        let paymentLink = null
-        try {
-            const transaction = await MidtransService.createTransaction(invoice)
-            // The redirection URL for Snap popup can be constructed if needed, 
-            // but usually we rely on the token in the frontend.
-            // For WhatsApp, we can provide a direct payment link if we have one or just the dashboard link.
-            paymentLink = transaction.redirect_url
-        } catch (err: any) {
-            logger.error(`[Billing] Failed to create Midtrans transaction for invoice ${invoice.id}: ${err.message}`)
-        }
+        // 5. Integration: Removed automatic Tripay generation (user will choose on public page)
+        const frontendUrl = env.get('FRONTEND_URL', 'http://localhost:5173')
+        const paymentLink = `${frontendUrl}/pay/${invoice.paymentToken}`
 
         // 6. Send WhatsApp Notification
         const currencyFormatter = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 })
@@ -80,20 +74,14 @@ export default class InvoiceService {
         // Construct message
         let waMessage = `*TAGIHAN INTERNET HOMENET*\n\n` +
             `Halo *${customer.fullName}*,\n` +
-            `Tagihan internet Homenet Anda untuk periode *${generationMonth}* telah tersedia.\n\n` +
+            `Tagihan internet Homenet Anda untuk periode *${DateTime.fromFormat(generationMonth, 'yyyy-MM').setLocale('id').toFormat('MMMM yyyy')}* telah tersedia.\n\n` +
             `Detail:\n` +
             `- Biaya Paket: ${currencyFormatter.format(currentAmount)}\n` +
             `- Tunggakan: ${currencyFormatter.format(previousBalance)}\n` +
-            `- *Total Bayar: ${totalStr}*\n` +
-            `- Jatuh Tempo: ${dueDateStr}\n\n`
-
-        if (paymentLink) {
-            waMessage += `Silakan lakukan pembayaran online melalui link berikut:\n${paymentLink}\n\n`
-        } else {
-            waMessage += `Silakan login ke dashboard pelanggan untuk melakukan pembayaran.\n\n`
-        }
-
-        waMessage += `Terima kasih atas kepercayaan Anda.\n_Homenet Team_`
+            `- Jatuh Tempo: ${dueDateStr}\n\n` +
+            `Link Pembayaran: ${paymentLink}\n\n` +
+            `Silakan tekan link di atas untuk memilih metode pembayaran (QRIS, VA, dll).\n\n` +
+            `Terika kasih atas kepercayaan Anda.\n_Homenet Team_`
 
         await WhatsappService.sendMessage(customer.phone, waMessage)
 

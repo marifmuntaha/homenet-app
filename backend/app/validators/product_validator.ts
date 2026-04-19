@@ -7,6 +7,8 @@ export const createProductValidator = vine.compile(
         downloadSpeed: vine.number().min(1),
         uploadSpeed: vine.number().min(1),
         description: vine.string().maxLength(500).optional().nullable(),
+        category: vine.enum(['pppoe', 'hotspot']).optional(),
+        activePeriod: vine.number().min(0).optional().nullable(),
     })
 )
 
@@ -17,5 +19,7 @@ export const updateProductValidator = vine.compile(
         downloadSpeed: vine.number().min(1).optional(),
         uploadSpeed: vine.number().min(1).optional(),
         description: vine.string().maxLength(500).optional().nullable(),
+        category: vine.enum(['pppoe', 'hotspot']).optional(),
+        activePeriod: vine.number().min(0).optional().nullable(),
     })
 )
